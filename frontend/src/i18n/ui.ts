@@ -281,6 +281,11 @@ export const ui = {
     domicile: { fr: 'Domicile · Marseille', en: 'Home · Marseille' },
     campus: { fr: "Campus · IUT d'Arles", en: 'Campus · IUT Arles' },
     centrerCarte: { fr: 'Voir sur la carte', en: 'Center on map' },
+    afficherCarte: { fr: 'Afficher la carte', en: 'Show the map' },
+    noteCarte: {
+      fr: 'Elle se charge depuis openstreetmap.org.',
+      en: 'It loads from openstreetmap.org.',
+    },
     titreIframe: { fr: 'Carte interactive OpenStreetMap (Marseille et Arles)', en: 'Interactive OpenStreetMap (Marseille and Arles)' },
     ouvrirMaps: { fr: 'Google Maps', en: 'Google Maps' },
     ouvrirOsm: { fr: 'OpenStreetMap', en: 'OpenStreetMap' },

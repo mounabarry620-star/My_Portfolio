@@ -39,7 +39,7 @@ const cleTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
 <div class="assistant" data-assistant data-etat="repos" data-langue={l} data-turnstile={cleTurnstile} data-textes={JSON.stringify(textes)}>
   <section class="assistant__panneau" id="assistant-panneau" aria-labelledby="assistant-titre" hidden data-assistant-panneau>
     <header class="assistant__tete">
-      <span class="assistant__pastille" aria-hidden="true"><Icone nom="ia" taille={18} /></span>
+      <span class="assistant__pastille" aria-hidden="true"><Icone nom="micro" taille={18} /></span>
       <div class="assistant__titres">
         <h2 id="assistant-titre">{a.titre[l]}</h2>
         <p>{a.sousTitre[l]}</p>
@@ -108,7 +108,7 @@ const cleTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
     aria-controls="assistant-panneau"
   >
     <span class="assistant__ondes" aria-hidden="true"></span>
-    <Icone nom="ia" taille={20} />
+    <Icone nom="micro" taille={22} />
     <span class="assistant__bouton-texte">{a.bouton[l]}</span>
   </button>
 </div>

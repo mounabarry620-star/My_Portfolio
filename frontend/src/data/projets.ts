@@ -354,12 +354,12 @@ export const projets: Projet[] = [
       {
         image: devartStand,
         alt: {
-          fr: "La table de l'équipe <Nebula/> (Barry Mamadou Bailo, Camara Aminata Sita B, Nganji Aldo Alex, Toure Hiamou Djawad) pendant le hackathon Dev'Art 2026",
-          en: "Team <Nebula/>'s table (Barry Mamadou Bailo, Camara Aminata Sita B, Nganji Aldo Alex, Toure Hiamou Djawad) during the Dev'Art 2026 hackathon",
+          fr: "La table de l'équipe <Nebula/> (Mamadou, Aminata, Alex et Djawad) pendant le hackathon Dev'Art 2026",
+          en: "Team <Nebula/>'s table (Mamadou, Aminata, Alex and Djawad) during the Dev'Art 2026 hackathon",
         },
         legende: {
-          fr: 'Le stand <Nebula/> : Mamadou Bailo Barry, Aminata Camara, Aldo Alex Nganji et Djawad Touré.',
-          en: 'The <Nebula/> desk: Mamadou Bailo Barry, Aminata Camara, Aldo Alex Nganji and Djawad Touré.',
+          fr: 'Le stand <Nebula/> : Mamadou, Aminata, Alex et Djawad.',
+          en: 'The <Nebula/> desk: Mamadou, Aminata, Alex and Djawad.',
         },
       },
       {

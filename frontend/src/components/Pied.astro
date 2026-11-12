@@ -149,15 +149,22 @@ const { marseille, arles, fuseau } = profil.localisation;
           </a>
         </div>
 
-        <div class="loc__fenetre-osm">
-          <iframe
-            class="loc__iframe"
-            data-iframe-osm
-            src={marseille.embed}
-            title={ui.pied.titreIframe[l]}
-            loading="lazy"
-            referrerpolicy="no-referrer"
-          ></iframe>
+        <!-- La carte n'est chargée depuis openstreetmap.org qu'après un clic : sans clic,
+             le visiteur ne contacte aucun autre site. -->
+        <div class="loc__fenetre-osm" data-fenetre-osm data-embed-actif={marseille.embed}>
+          <button type="button" class="loc__charger" data-charger-carte>
+            <span class="loc__plan" aria-hidden="true">
+              <i class="loc__epingle loc__epingle--marseille"></i>
+              <i class="loc__epingle loc__epingle--arles"></i>
+            </span>
+            <span class="loc__charger-texte">
+              <strong>{ui.pied.afficherCarte[l]}</strong>
+              <small>{ui.pied.noteCarte[l]}</small>
+            </span>
+          </button>
+          <template data-modele-iframe>
+            <iframe class="loc__iframe" data-iframe-osm title={ui.pied.titreIframe[l]} referrerpolicy="no-referrer"></iframe>
+          </template>
         </div>
       </div>
     </section>
@@ -374,6 +381,67 @@ const { marseille, arles, fuseau } = profil.localisation;
     inline-size: 100%;
     block-size: 100%;
     min-block-size: 14rem;
+  }
+  /* Aperçu dessiné en CSS (aucune image, aucun site extérieur) en attendant le clic */
+  .loc__charger {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 14rem;
+    padding: 1rem;
+    border-radius: inherit;
+    background-color: var(--fond-2);
+    background-image:
+      linear-gradient(var(--trait) 1px, transparent 1px),
+      linear-gradient(90deg, var(--trait) 1px, transparent 1px),
+      radial-gradient(ellipse 45% 38% at 22% 82%, color-mix(in oklch, var(--accent-2) 12%, transparent) 0 98%, transparent);
+    background-size: 2.2rem 2.2rem, 2.2rem 2.2rem, 100% 100%;
+    cursor: pointer;
+  }
+  .loc__plan {
+    position: absolute;
+    inset: 0;
+  }
+  .loc__epingle {
+    position: absolute;
+    inline-size: 1rem;
+    block-size: 1rem;
+    border-radius: 50% 50% 50% 0;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--fond);
+    transform: rotate(-45deg);
+  }
+  .loc__epingle--marseille {
+    inset: 62% auto auto 64%;
+  }
+  .loc__epingle--arles {
+    inset: 28% auto auto 30%;
+    background: var(--accent-2);
+  }
+  .loc__charger-texte {
+    position: relative;
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--rayon-m);
+    background: var(--surface);
+    box-shadow: var(--ombre);
+    text-align: center;
+    transition: transform 0.3s var(--sortie);
+  }
+  .loc__charger:hover .loc__charger-texte,
+  .loc__charger:focus-visible .loc__charger-texte {
+    transform: translateY(-2px);
+  }
+  .loc__charger-texte strong {
+    font-family: var(--f-etiquette);
+    font-weight: 700;
+  }
+  .loc__charger-texte small {
+    font-size: 0.75rem;
+    color: var(--encre-2);
   }
   .loc__iframe {
     display: block;

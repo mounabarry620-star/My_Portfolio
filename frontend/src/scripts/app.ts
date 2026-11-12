@@ -260,12 +260,23 @@ function initialiserHorloge() {
 /* ------------------ Sélecteur de lieu sur la carte OpenStreetMap en pied de page */
 function initialiserCarteOsm() {
   const section = $<HTMLElement>('[data-loc]');
-  const iframe = $<HTMLIFrameElement>('[data-iframe-osm]', section ?? document);
-  if (!section || !iframe) return;
+  const fenetre = $<HTMLElement>('[data-fenetre-osm]', section ?? document);
+  if (!section || !fenetre) return;
 
   const boutons = $$<HTMLButtonElement>('[data-changer-carte]', section);
   const cartes = $$<HTMLElement>('[data-lieu-carte]', section);
   const lienDirect = $<HTMLAnchorElement>('[data-lien-osm-actif]', section);
+  const iframe = () => $<HTMLIFrameElement>('[data-iframe-osm]', fenetre);
+
+  // La carte n'est chargée qu'au clic (vie privée et rapidité).
+  $<HTMLButtonElement>('[data-charger-carte]', fenetre)?.addEventListener('click', (e) => {
+    const modele = $<HTMLTemplateElement>('[data-modele-iframe]', fenetre);
+    if (!modele) return;
+    const cadre = modele.content.firstElementChild!.cloneNode(true) as HTMLIFrameElement;
+    cadre.src = fenetre.dataset.embedActif ?? '';
+    (e.currentTarget as HTMLElement).replaceWith(cadre);
+    cadre.focus();
+  });
 
   section.addEventListener('click', (e) => {
     const btn = (e.target as Element).closest<HTMLButtonElement>('[data-changer-carte]');
@@ -273,7 +284,11 @@ function initialiserCarteOsm() {
     const lieu = btn.dataset.changerCarte;
     const embed = btn.dataset.embed;
     const osm = btn.dataset.osm;
-    if (embed && iframe.src !== embed) iframe.src = embed;
+    if (embed) {
+      fenetre.dataset.embedActif = embed;
+      const cadre = iframe();
+      if (cadre && cadre.src !== embed) cadre.src = embed;
+    }
     if (osm && lienDirect) lienDirect.href = osm;
     boutons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.changerCarte === lieu)));
     cartes.forEach((c) => c.toggleAttribute('data-actif', c.dataset.lieuCarte === lieu));
