@@ -1,0 +1,354 @@
+---
+/**
+ * Section 03 — Compétences : les six compétences du référentiel du BUT Informatique,
+ * avec le niveau atteint et les projets qui servent de preuve, puis la boîte à outils.
+ */
+import TitreSection from '../TitreSection.astro';
+import Niveaux from '../Niveaux.astro';
+import Logo from '../Logo.astro';
+import { logosDe } from '@/data/logos';
+import { ui } from '@/i18n/ui';
+import type { Langue } from '@/i18n';
+import { boiteAOutils, competences } from '@/data/competences';
+import { lienRealisation, titreRealisation } from '@/data/liens';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+
+const hors: Record<string, Record<Langue, string>> = {
+  cours: { fr: 'Cours et travaux pratiques', en: 'Coursework and labs' },
+  emploi: { fr: 'Emploi en boutique', en: 'Shop job' },
+};
+const ou = (ids: string[]) => ids.map((id) => hors[id]?.[l] ?? titreRealisation(l, id)).join(' · ');
+---
+
+<section class="section competences" id="competences" data-section="competences" aria-labelledby="titre-competences">
+  <div class="conteneur">
+    <TitreSection
+      numero={3}
+      id="competences"
+      etiquette={ui.competences.etiquette[l]}
+      titre={ui.competences.titre[l]}
+      intro={ui.competences.intro[l]}
+    />
+
+    <ul class="grille" role="list">
+      {
+        competences.map((c, i) => (
+          <li class="comp" data-revele style={`--delai: ${(i % 3) * 0.08}s`}>
+            <header class="comp__tete">
+              <span class="comp__code">C{c.numero}</span>
+              <h3 class="comp__verbe">{c.verbe[l]}</h3>
+            </header>
+            <p class="comp__intitule">{c.intitule[l]}</p>
+            <Niveaux texte={c.definition} langue={l} class="comp__definition" />
+
+            <ol class="comp__niveaux" role="list">
+              <li class="niveau niveau--valide">
+                <span class="niveau__jauge" aria-hidden="true" />
+                <span class="niveau__texte">
+                  <strong>{ui.competences.niveau1[l]}</strong> · {ui.competences.niveau1Etat[l]}
+                  <span class="niveau__nom" data-niveau="technique">
+                    {c.niveaux[0][l]}
+                  </span>
+                </span>
+              </li>
+              <li class="niveau niveau--encours">
+                <span class="niveau__jauge" aria-hidden="true" />
+                <span class="niveau__texte">
+                  <strong>{ui.competences.niveau2[l]}</strong> · {ui.competences.niveau2Etat[l]}
+                  <span class="niveau__nom" data-niveau="technique">
+                    {c.niveaux[1][l]}
+                  </span>
+                </span>
+              </li>
+            </ol>
+
+            <div class="comp__preuves">
+              <p class="etiquette">{ui.competences.preuves[l]}</p>
+              <ul role="list">
+                {c.preuves.map((p) => (
+                  <li>
+                    <a href={lienRealisation(l, p.projet)}>{titreRealisation(l, p.projet)}</a>
+                    <span>{p.apport[l]}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="outils-bloc">
+      <div class="outils-bloc__tete" data-revele>
+        <h3 class="titre-3">{ui.competences.outils[l]}</h3>
+        <p class="chapo">{ui.competences.outilsIntro[l]}</p>
+        <p class="outils-ou" data-outils-ou data-defaut={ui.competences.outilsAide[l]} aria-live="polite">
+          {ui.competences.outilsAide[l]}
+        </p>
+      </div>
+      <dl class="outils-grille">
+        {
+          boiteAOutils.map((g, i) => (
+            <div class="outils-groupe" data-revele style={`--delai: ${i * 0.06}s`}>
+              <dt class="etiquette">{g.titre[l]}</dt>
+              <dd>
+                <ul class="puces">
+                  {g.outils.map((o) => (
+                    <li class="puce outil" tabindex="0" data-ou={`${o.nom} — ${ou(o.utiliseDans)}`}>
+                      {logosDe(o.nom).length > 0 && (
+                        <span class="outil__logos" aria-hidden="true">
+                          {logosDe(o.nom).map((n) => <Logo nom={n} />)}
+                        </span>
+                      )}
+                      {o.nom}
+                      <span class="cache-visuel"> — {ou(o.utiliseDans)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </div>
+</section>
+
+<style>
+  .competences {
+    padding-block-end: clamp(3rem, 6vw, 5rem);
+  }
+  .grille {
+    display: grid;
+    gap: 1px;
+    margin: 0;
+    background: var(--trait);
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon);
+    overflow: clip;
+  }
+  .comp {
+    display: grid;
+    align-content: start;
+    gap: 0.9rem;
+    padding: clamp(1.25rem, 2.6vw, 2rem);
+    background: var(--fond);
+    transition: background-color 0.4s;
+  }
+  @media (hover: hover) {
+    .comp:hover {
+      background: var(--surface);
+    }
+    .comp:hover .comp__code {
+      background: var(--accent);
+      color: var(--sur-accent);
+      border-color: transparent;
+    }
+  }
+  .comp__tete {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  .comp__code {
+    display: grid;
+    place-items: center;
+    inline-size: 2.6rem;
+    block-size: 2.6rem;
+    flex: none;
+    border: 1.5px solid var(--trait-fort);
+    border-radius: 50%;
+    font-family: var(--f-etiquette);
+    font-size: 0.875rem;
+    font-weight: 750;
+    transition:
+      background-color 0.35s,
+      color 0.35s,
+      border-color 0.35s;
+  }
+  :global([data-theme='machine']) .comp__code {
+    border-radius: var(--rayon-s);
+  }
+  .comp__verbe {
+    font-size: var(--t-xl);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: 1;
+  }
+  .comp__intitule {
+    font-weight: 650;
+    line-height: 1.35;
+  }
+  .comp :global(.comp__definition) {
+    color: var(--encre-2);
+    font-size: 0.9375rem;
+  }
+
+  /* Niveaux : une jauge pleine (validé) et une jauge hachurée (en cours) */
+  .comp__niveaux {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0.2rem 0 0;
+  }
+  .niveau {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    align-items: start;
+    gap: 0.85rem;
+    font-size: var(--t-s);
+    line-height: 1.35;
+  }
+  .niveau__jauge {
+    block-size: 0.5rem;
+    margin-block-start: 0.4rem;
+    border-radius: 999px;
+    background: var(--accent-encre);
+  }
+  .niveau--encours .niveau__jauge {
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--accent-encre) 0 3px,
+      color-mix(in oklch, var(--accent-encre) 25%, transparent) 3px 6px
+    );
+  }
+  .niveau__nom {
+    display: block;
+    color: var(--encre-2);
+    font-size: 0.8125rem;
+  }
+
+  .comp__preuves {
+    margin-block-start: 0.35rem;
+    padding-block-start: 0.9rem;
+    border-block-start: 1px dashed var(--trait-fort);
+  }
+  .comp__preuves .etiquette {
+    font-size: 0.625rem;
+    color: var(--encre-2);
+    margin-block-end: 0.5rem;
+  }
+  .comp__preuves ul {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+  }
+  .comp__preuves li {
+    display: grid;
+    font-size: var(--t-s);
+    line-height: 1.4;
+  }
+  .comp__preuves a {
+    justify-self: start;
+    font-weight: 700;
+    text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
+  }
+  .comp__preuves a:hover {
+    text-decoration-color: currentColor;
+  }
+  .comp__preuves span {
+    color: var(--encre-2);
+  }
+
+  @media (min-width: 44em) {
+    .grille {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 70em) {
+    .grille {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* ---- Boîte à outils ---- */
+  .outils-bloc {
+    display: grid;
+    gap: 2rem clamp(2rem, 6vw, 5rem);
+    margin-block-start: clamp(4rem, 9vw, 7rem);
+  }
+  .outils-bloc__tete {
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+  }
+  .outils-grille {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    border-block-start: 2px solid var(--encre);
+  }
+  .outils-groupe {
+    display: grid;
+    gap: 0.6rem 1.5rem;
+    padding-block: 1.1rem;
+    border-block-end: 1px solid var(--trait);
+  }
+  .outils-groupe dt {
+    color: var(--encre-2);
+    padding-block-start: 0.45rem;
+  }
+  .outils-groupe dd {
+    margin: 0;
+  }
+  /* Chaque outil dit où il a servi : au survol ou au focus, la ligne d'information se met à jour */
+  .outil {
+    cursor: help;
+    font-size: 0.875rem;
+    padding: 0.35rem 0.8rem;
+    transition:
+      background-color 0.25s,
+      color 0.25s,
+      border-color 0.25s;
+  }
+  .outil:hover,
+  .outil:focus-visible,
+  .outil[data-actif] {
+    background: var(--encre);
+    color: var(--fond);
+    border-color: transparent;
+  }
+  /* Pastille claire derrière les logos : ils restent lisibles dans les thèmes sombres */
+  .outil__logos {
+    display: inline-flex;
+    gap: 0.2rem;
+    padding: 0.12rem 0.22rem;
+    border-radius: 0.35rem;
+    background: #fff;
+  }
+  .outils-ou {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    min-block-size: 4.2rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--rayon-m);
+    background: var(--fond-2);
+    font-size: var(--t-s);
+    font-weight: 600;
+    line-height: 1.45;
+  }
+  .outils-ou::before {
+    content: '';
+    flex: none;
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
+    margin-block-start: 0.4rem;
+    border-radius: 50%;
+    background: var(--accent-encre);
+  }
+  @media (min-width: 40em) {
+    .outils-groupe {
+      grid-template-columns: 11rem 1fr;
+    }
+  }
+  @media (min-width: 70em) {
+    .outils-bloc {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    }
+  }
+</style>

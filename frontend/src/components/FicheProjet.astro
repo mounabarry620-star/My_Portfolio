@@ -1,0 +1,543 @@
+---
+/**
+ * Fiche détaillée d'un projet : le besoin, mon rôle, ce qui a été fait, le résultat,
+ * ce que j'en retiens. Les textes existent en version simple et en version technique.
+ */
+import { Picture } from 'astro:assets';
+import Base from '@/layouts/Base.astro';
+import Niveaux from './Niveaux.astro';
+import Icone from './Icone.astro';
+import ChoixLecture from './ChoixLecture.astro';
+import Techno from './Techno.astro';
+import { ui } from '@/i18n/ui';
+import { routes, type Langue } from '@/i18n';
+import { projetsVedettes, type Projet } from '@/data/projets';
+import { competences } from '@/data/competences';
+import { profil } from '@/data/profil';
+
+interface Props {
+  projet: Projet;
+  langue: Langue;
+}
+const { projet: p, langue: l } = Astro.props;
+
+const versions = { fr: routes.projet('fr', p.slug), en: routes.projet('en', p.slug) };
+const comps = competences.filter((c) => p.competences.includes(c.id));
+const index = projetsVedettes.findIndex((x) => x.slug === p.slug);
+const suivant = projetsVedettes[(index + 1) % projetsVedettes.length]!;
+const titrePage = `${p.titre[l]} — ${p.genre[l]} · ${profil.nomComplet}`;
+// Le cadre de l'image suit ses proportions (dans des limites raisonnables) pour ne rien couper.
+const proportions = p.couverture ? Math.min(2.1, Math.max(1.5, p.couverture.image.width / p.couverture.image.height)) : 16 / 9;
+const realisationsTitre = p.collectif
+  ? { fr: "Ce que l'équipe a réalisé", en: 'What the team built' }[l]
+  : ui.projets.realisation[l];
+---
+
+<Base langue={l} versions={versions} titre={titrePage} description={p.accroche.simple[l]}>
+  <article class="fiche">
+    <header class="fiche__tete conteneur">
+      <a class="lien fiche__retour" href={routes.section(l, 'projets')}>
+        <Icone nom="fleche-gauche" taille={16} />
+        {ui.projets.tous[l]}
+      </a>
+      <p class="etiquette fiche__genre">
+        {p.genre[l]}<span aria-hidden="true"> · </span>{p.periode[l]}
+      </p>
+      <h1 class="fiche__titre">{p.titre[l]}</h1>
+      <Niveaux texte={p.accroche} langue={l} class="fiche__accroche" />
+      <div class="fiche__barre">
+        {p.distinction && <span class="puce puce--accent">★ {p.distinction[l]}</span>}
+        {
+          p.liens?.map((lien) => (
+            <a class:list={['bouton', 'bouton--compact', { 'bouton--contour': lien.type === 'code' }]} href={lien.href} target="_blank" rel="noopener">
+              {lien.type === 'demo' ? ui.projets.demo[l] : ui.projets.code[l]}
+              <span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
+              <Icone nom="fleche-sortie" />
+            </a>
+          ))
+        }
+        {p.note && <span class="fiche__note">{p.note[l]}</span>}
+        <ChoixLecture langue={l} />
+      </div>
+    </header>
+
+    {
+      p.couverture && (
+        <div class="conteneur">
+          <div class="fiche__couverture" style={`view-transition-name: couverture-${p.slug}; aspect-ratio: ${proportions.toFixed(3)};`}>
+            <Picture
+              src={p.couverture.image}
+              alt={p.couverture.alt[l]}
+              formats={['avif']}
+              fallbackFormat="webp"
+              widths={[640, 960, 1344, 1920, 2400]}
+              sizes="(min-width: 90em) 84rem, calc(100vw - 2.25rem)"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+              quality={62}
+            />
+          </div>
+        </div>
+      )
+    }
+
+    <div class="conteneur fiche__corps">
+      <aside class="fiche__repere" aria-label={p.titre[l]}>
+        <dl>
+          <div>
+            <dt class="etiquette">{ui.projets.role[l]}</dt>
+            <dd>{p.role[l]}</dd>
+          </div>
+          <div>
+            <dt class="etiquette">{ui.projets.equipe[l]}</dt>
+            <dd>{p.equipe[l]}</dd>
+          </div>
+          <div>
+            <dt class="etiquette">{ui.projets.cadre[l]}</dt>
+            <dd>{p.cadre[l]}</dd>
+          </div>
+          <div>
+            <dt class="etiquette">{ui.projets.technologies[l]}</dt>
+            <dd>
+              <ul class="puces">
+                {p.technologies.map((t) => (
+                  <Techno nom={t} />
+                ))}
+              </ul>
+            </dd>
+          </div>
+          <div>
+            <dt class="etiquette">{ui.projets.competences[l]}</dt>
+            <dd>
+              <ul class="fiche__comps" role="list">
+                {comps.map((c) => (
+                  <li>
+                    <a href={routes.section(l, 'competences')}>
+                      <b>C{c.numero}</b>
+                      {c.intitule[l]}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        </dl>
+      </aside>
+
+      <div class="fiche__recit">
+        {
+          p.chiffres && (
+            <ul class="chiffres" role="list" aria-label={ui.projets.chiffres[l]}>
+              {p.chiffres.map((c, i) => (
+                <li data-revele style={`--delai: ${i * 0.07}s`}>
+                  <strong>{c.valeur}</strong>
+                  <span>{c.libelle[l]}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
+        {
+          p.besoin && (
+            <section class="bloc" data-revele>
+              <h2 class="bloc__titre">
+                <span class="pastille">1</span>
+                {ui.projets.besoin[l]}
+              </h2>
+              <Niveaux texte={p.besoin} langue={l} class="bloc__texte" />
+            </section>
+          )
+        }
+
+        {
+          p.realisations && (
+            <section class="bloc" data-revele>
+              <h2 class="bloc__titre">
+                <span class="pastille">2</span>
+                {realisationsTitre}
+              </h2>
+              <ol class="bloc__liste" role="list">
+                {p.realisations.map((r) => (
+                  <li>
+                    <Niveaux texte={r} langue={l} balise="span" />
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
+
+        {
+          p.resultat && (
+            <section class="bloc" data-revele>
+              <h2 class="bloc__titre">
+                <span class="pastille">3</span>
+                {ui.projets.resultat[l]}
+              </h2>
+              <Niveaux texte={p.resultat} langue={l} class="bloc__texte" />
+            </section>
+          )
+        }
+
+        {
+          p.appris && (
+            <section class="bloc bloc--appris" data-revele>
+              <h2 class="bloc__titre">
+                <span class="pastille">{p.resultat ? 4 : 3}</span>
+                {ui.projets.appris[l]}
+              </h2>
+              <p class="bloc__texte">{p.appris[l]}</p>
+            </section>
+          )
+        }
+      </div>
+    </div>
+
+    {
+      p.galerie && p.galerie.length > 0 && (
+        <section class="conteneur galerie" aria-labelledby="titre-galerie">
+          <h2 class="titre-2" id="titre-galerie" data-revele>
+            {ui.projets.images[l]}
+          </h2>
+          <div class="galerie__grille">
+            {p.galerie.map((g, i) => (
+              <figure class:list={{ 'galerie__large': i === 0 && p.galerie!.length !== 2 }} data-revele>
+                <div class="galerie__cadre">
+                  <Picture
+                    src={g.image}
+                    alt={g.alt[l]}
+                    formats={['avif']}
+                    fallbackFormat="webp"
+                    widths={[480, 800, 1200, 1600, 2000]}
+                    sizes="(min-width: 60em) 60vw, calc(100vw - 2.25rem)"
+                    loading="lazy"
+                    decoding="async"
+                    quality={64}
+                  />
+                </div>
+                {g.legende && <figcaption>{g.legende[l]}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <nav class="suite" aria-label={ui.projets.suivant[l]}>
+      <a class="conteneur suite__lien" href={routes.projet(l, suivant.slug)}>
+        <span class="etiquette">{ui.projets.suivant[l]}</span>
+        <span class="suite__titre">
+          {suivant.titre[l]}
+          <Icone nom="fleche-droite" taille={48} />
+        </span>
+        <span class="suite__genre">{suivant.genre[l]}</span>
+      </a>
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .fiche__tete {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    padding-block: clamp(1.75rem, 4vw, 3.25rem) clamp(1.75rem, 4vw, 3rem);
+  }
+  .fiche__retour {
+    margin-block-end: clamp(0.75rem, 2vw, 1.75rem);
+    color: var(--encre-2);
+  }
+  .fiche__retour:hover :global(svg) {
+    transform: translateX(-0.2em);
+  }
+  .fiche__genre {
+    color: var(--encre-2);
+  }
+  .fiche__titre {
+    font-size: var(--t-3xl);
+    font-size: clamp(2.6rem, calc((0.9rem + 7.4vw) * var(--h1-echelle)), 7.5rem);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: var(--titre-hauteur);
+    animation: monte 1s var(--sortie) both;
+  }
+  @keyframes monte {
+    from {
+      opacity: 0;
+      transform: translateY(0.35em);
+    }
+  }
+  .fiche__tete :global(.fiche__accroche) {
+    font-size: var(--t-xl);
+    line-height: 1.32;
+    max-inline-size: 52rem;
+    color: var(--encre-2);
+    text-wrap: balance;
+  }
+  .fiche__barre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-block-start: 0.5rem;
+  }
+  .fiche__note {
+    font-size: var(--t-s);
+    color: var(--encre-2);
+  }
+  .fiche__barre :global(.choix-lecture) {
+    margin-inline-start: auto;
+  }
+
+  .fiche__couverture {
+    overflow: clip;
+    border-radius: var(--rayon);
+    background: var(--fond-2);
+    box-shadow: inset 0 0 0 1px var(--trait);
+    aspect-ratio: 16 / 9;
+  }
+  .fiche__couverture :global(picture),
+  .fiche__couverture :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: 50% 0;
+  }
+
+  .fiche__corps {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 5rem);
+    padding-block: clamp(2.75rem, 7vw, 6rem);
+  }
+  .fiche__repere dl {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    border-block-start: 2px solid var(--encre);
+  }
+  .fiche__repere dl > div {
+    display: grid;
+    gap: 0.35rem;
+    padding-block: 0.95rem;
+    border-block-end: 1px solid var(--trait);
+  }
+  .fiche__repere dt {
+    font-size: 0.6875rem;
+    color: var(--encre-2);
+  }
+  .fiche__repere dd {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .fiche__comps {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+  }
+  .fiche__comps a {
+    display: inline-flex;
+    gap: 0.5rem;
+    font-size: var(--t-s);
+    text-decoration-color: color-mix(in oklch, currentColor 30%, transparent);
+  }
+  .fiche__comps a:hover {
+    text-decoration-color: currentColor;
+  }
+  .fiche__comps b {
+    color: var(--accent-encre);
+    font-weight: 750;
+  }
+
+  /* Chiffres clés */
+  .chiffres {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    margin: 0 0 clamp(2.5rem, 5vw, 4rem);
+    background: var(--trait);
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon-m);
+    overflow: clip;
+  }
+  .chiffres li {
+    display: grid;
+    gap: 0.4rem;
+    align-content: start;
+    padding: 1.1rem 1.2rem;
+    background: var(--fond);
+  }
+  .chiffres strong {
+    font-family: var(--f-titre);
+    font-size: clamp(2.1rem, 4.4vw, 3.4rem);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: 0.95;
+    color: var(--accent-encre);
+    font-variant-numeric: tabular-nums;
+  }
+  .chiffres span {
+    font-size: var(--t-s);
+    line-height: 1.3;
+    color: var(--encre-2);
+  }
+  @media (min-width: 40em) {
+    .chiffres {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  /* Blocs du récit */
+  .bloc + .bloc {
+    margin-block-start: clamp(2.5rem, 5vw, 4rem);
+  }
+  .bloc__titre {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-block-end: 1rem;
+    font-size: var(--t-xl);
+    font-weight: var(--sous-titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: calc(var(--titre-interlettre) * 0.6);
+    line-height: 1.15;
+  }
+  .bloc :global(.bloc__texte) {
+    font-size: var(--t-l);
+    line-height: 1.6;
+    max-inline-size: 44rem;
+  }
+  .bloc__liste {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    counter-reset: etape;
+    max-inline-size: 46rem;
+  }
+  .bloc__liste li {
+    position: relative;
+    padding: 1rem 0 1rem 2.75rem;
+    border-block-end: 1px solid var(--trait);
+    font-size: var(--t-l);
+    line-height: 1.55;
+    counter-increment: etape;
+  }
+  .bloc__liste li::before {
+    content: counter(etape, decimal-leading-zero);
+    position: absolute;
+    inset: 1.25rem auto auto 0;
+    font-family: var(--f-mono);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--accent-encre);
+  }
+  .bloc--appris {
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border-radius: var(--rayon);
+    background: var(--fond-2);
+  }
+
+  @media (min-width: 62em) {
+    .fiche__corps {
+      grid-template-columns: minmax(15rem, 0.42fr) minmax(0, 1fr);
+      align-items: start;
+    }
+    .fiche__repere {
+      position: sticky;
+      inset-block-start: calc(var(--entete-h) + 2rem);
+    }
+  }
+
+  /* Galerie */
+  .galerie {
+    padding-block-end: clamp(3rem, 8vw, 7rem);
+  }
+  .galerie .titre-2 {
+    margin-block-end: clamp(1.5rem, 4vw, 3rem);
+  }
+  .galerie__grille {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .galerie figure {
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+  }
+  .galerie__cadre {
+    overflow: clip;
+    border-radius: var(--rayon);
+    background: var(--fond-2);
+    box-shadow: inset 0 0 0 1px var(--trait);
+  }
+  .galerie__cadre :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
+  .galerie figcaption {
+    font-size: var(--t-s);
+    color: var(--encre-2);
+    padding-inline-start: 0.9rem;
+    border-inline-start: 2px solid var(--accent-encre);
+  }
+  @media (min-width: 54em) {
+    .galerie__grille {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .galerie__large {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Projet suivant */
+  .suite {
+    border-block-start: 1px solid var(--trait);
+    background: var(--fond-2);
+    transition: background-color 0.5s;
+  }
+  .suite__lien {
+    display: grid;
+    gap: 0.6rem;
+    padding-block: clamp(2.5rem, 7vw, 5.5rem);
+    text-decoration: none;
+    color: var(--encre-2);
+  }
+  .suite__titre {
+    display: flex;
+    align-items: center;
+    gap: 0.35em;
+    font-family: var(--f-titre);
+    font-size: var(--t-2xl);
+    font-size: clamp(2rem, calc((1rem + 5vw) * var(--h1-echelle)), 5.5rem);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: 1;
+    color: var(--encre);
+  }
+  .suite__titre :global(svg) {
+    flex: none;
+    inline-size: 0.7em;
+    block-size: 0.7em;
+    transition: transform 0.6s var(--ressort);
+  }
+  @media (hover: hover) {
+    .suite:hover {
+      background: var(--accent);
+    }
+    .suite:hover .suite__lien,
+    .suite:hover .suite__titre {
+      color: var(--sur-accent);
+    }
+    .suite:hover .suite__titre :global(svg) {
+      transform: translateX(0.3em);
+    }
+  }
+</style>

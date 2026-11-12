@@ -1,0 +1,59 @@
+---
+/**
+ * Page d'accueil, commune au français et à l'anglais.
+ * Ordre des sections = méthode des « 3 P » : Particularités → Preuves → Profits.
+ */
+import Base from '@/layouts/Base.astro';
+import Hero from './Hero.astro';
+import Particularites from './sections/Particularites.astro';
+import Projets from './sections/Projets.astro';
+import Competences from './sections/Competences.astro';
+import ActiviteGithub from './sections/ActiviteGithub.astro';
+import Parcours from './sections/Parcours.astro';
+import Atouts from './sections/Atouts.astro';
+import Contact from './sections/Contact.astro';
+import { routes, type Langue } from '@/i18n';
+import { ui } from '@/i18n/ui';
+import { profil, stage } from '@/data/profil';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const versions = { fr: routes.accueil('fr'), en: routes.accueil('en') };
+
+// Données structurées (schema.org) : aident les moteurs de recherche à comprendre la page.
+const personne = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: profil.nomComplet,
+  givenName: profil.prenom,
+  familyName: profil.nom,
+  url: new URL(routes.accueil(l), Astro.site).href,
+  email: `mailto:${profil.email}`,
+  jobTitle: ui.billet.posteValeur[l],
+  description: ui.meta.description[l],
+  address: { '@type': 'PostalAddress', addressLocality: profil.ville, addressCountry: 'FR' },
+  alumniOf: { '@type': 'CollegeOrUniversity', name: "IUT d'Aix-Marseille, site d'Arles" },
+  knowsLanguage: ['ff', 'fr', 'en', 'de'],
+  sameAs: [profil.liens.linkedin, profil.liens.github],
+  seeks: {
+    '@type': 'Demand',
+    name: ui.contact.objetMail[l],
+    availabilityStarts: stage.debut,
+    availabilityEnds: stage.fin,
+  },
+};
+---
+
+<Base langue={l} versions={versions} surAccueil>
+  <script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(personne)} />
+  <Hero langue={l} />
+  <Particularites langue={l} />
+  <Projets langue={l} />
+  <Competences langue={l} />
+  <ActiviteGithub langue={l} />
+  <Parcours langue={l} />
+  <Atouts langue={l} />
+  <Contact langue={l} />
+</Base>

@@ -1,0 +1,245 @@
+---
+/** Section 06 — Contact (« terminus ») : la demande de stage, les moyens de me joindre, le CV et les questions fréquentes. */
+import TitreSection from '../TitreSection.astro';
+import Icone from '../Icone.astro';
+import { ui } from '@/i18n/ui';
+import { routes, url, type Langue } from '@/i18n';
+import { faq, profil } from '@/data/profil';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const courriel = `mailto:${profil.email}?subject=${encodeURIComponent(ui.contact.objetMail[l])}`;
+---
+
+<section class="section contact" id="contact" data-section="contact" aria-labelledby="titre-contact">
+  <div class="conteneur">
+    <TitreSection numero={6} id="contact" etiquette={ui.contact.etiquette[l]} titre={ui.contact.titre[l]} intro={ui.contact.texte[l]} />
+
+    <div class="contact__grille">
+      <div class="contact__principal">
+        <a class="contact__courriel" href={courriel} data-revele>
+          <span>{profil.email}</span>
+          <Icone nom="fleche-sortie" taille={40} />
+        </a>
+
+        <div class="contact__actions" data-revele style="--delai: .08s">
+          <button type="button" class="bouton" data-copier={profil.email} data-copie-texte={ui.contact.copie[l]}>
+            <Icone nom="copier" class="icone-copier" />
+            <Icone nom="valide" class="icone-valide" />
+            <span data-copier-libelle aria-live="polite">{ui.contact.copier[l]}</span>
+          </button>
+          <a class="bouton bouton--contour" href={`tel:${profil.telephone.lien}`}>
+            <Icone nom="telephone" />
+            {profil.telephone.affichage}
+          </a>
+          <a class="bouton bouton--contour" href={profil.liens.linkedin} target="_blank" rel="me noopener">
+            <Icone nom="linkedin" />
+            LinkedIn<span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
+          </a>
+          <a class="bouton bouton--contour" href={profil.liens.github} target="_blank" rel="me noopener">
+            <Icone nom="github" />
+            GitHub<span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
+          </a>
+        </div>
+
+        <ul class="contact__cv" role="list" data-revele style="--delai: .14s">
+          <li>
+            <a class="lien" href={url('/cv/CV_Mamadou_Bailo_Barry_FR.pdf')} download>
+              <Icone nom="telecharger" taille={16} />
+              {ui.contact.cvFr[l]}
+            </a>
+          </li>
+          <li>
+            <a class="lien" href={url('/cv/CV_Mamadou_Bailo_Barry_EN.pdf')} download>
+              <Icone nom="telecharger" taille={16} />
+              {ui.contact.cvEn[l]}
+            </a>
+          </li>
+          <li>
+            <a class="lien" href={routes.cv(l)}>
+              {ui.contact.cvPage[l]}
+              <Icone nom="fleche-droite" taille={16} />
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="faq" data-revele style="--delai: .1s">
+        <h3 class="etiquette">{ui.contact.faqTitre[l]}</h3>
+        {
+          faq.map((q, i) => (
+            <details name="faq" open={i === 0}>
+              <summary>
+                <span>{q.question[l]}</span>
+                <span class="faq__signe" aria-hidden="true" />
+              </summary>
+              <p>{q.reponse[l]}</p>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact {
+    background: var(--fond-2);
+  }
+  .contact__grille {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 5rem);
+  }
+  .contact__principal {
+    display: grid;
+    gap: 1.75rem;
+    align-content: start;
+    min-inline-size: 0;
+  }
+  /* L'adresse e-mail, écrite en grand : c'est l'action principale de la page */
+  .contact__courriel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    justify-self: start;
+    max-inline-size: 100%;
+    font-family: var(--f-titre);
+    font-size: clamp(1.2rem, 5.2vw, 3.1rem);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: 1.15;
+    text-decoration: none;
+    background: linear-gradient(var(--accent), var(--accent)) 0 100% / 100% 0.14em no-repeat;
+    padding-block-end: 0.12em;
+    transition: background-size 0.5s var(--sortie);
+  }
+  .contact__courriel span {
+    overflow-wrap: anywhere;
+  }
+  .contact__courriel :global(svg) {
+    flex: none;
+    inline-size: 0.8em;
+    block-size: 0.8em;
+    transition: transform 0.5s var(--ressort);
+  }
+  .contact__courriel:hover {
+    background-size: 100% 100%;
+    color: var(--sur-accent);
+  }
+  .contact__courriel:hover :global(svg) {
+    transform: translate(0.08em, -0.08em) rotate(8deg);
+  }
+  :global([data-theme='machine']) .contact__courriel,
+  :global([data-theme='conakry']) .contact__courriel {
+    font-size: clamp(1.05rem, 4.5vw, 2.6rem);
+  }
+
+  .contact__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .bouton :global(.icone-valide) {
+    display: none;
+  }
+  .bouton[data-copie] :global(.icone-valide) {
+    display: block;
+  }
+  .bouton[data-copie] :global(.icone-copier) {
+    display: none;
+  }
+  .contact__cv {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.75rem;
+    margin: 0;
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--trait);
+  }
+
+  /* ---- Questions fréquentes : accordéon natif (<details>) ---- */
+  .faq > .etiquette {
+    padding-block-end: 0.8rem;
+    border-block-end: 2px solid var(--encre);
+    color: var(--encre-2);
+  }
+  .faq details {
+    border-block-end: 1px solid var(--trait);
+    interpolate-size: allow-keywords;
+  }
+  .faq summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1rem;
+    font-weight: 650;
+    font-size: var(--t-l);
+    line-height: 1.3;
+    list-style: none;
+  }
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq__signe {
+    position: relative;
+    flex: none;
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    border-radius: 50%;
+    border: 1.5px solid var(--trait-fort);
+    transition:
+      background-color 0.3s,
+      border-color 0.3s,
+      transform 0.5s var(--ressort);
+  }
+  .faq__signe::before,
+  .faq__signe::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    inline-size: 0.7rem;
+    block-size: 1.5px;
+    background: currentColor;
+    translate: -50% -50%;
+    transition: rotate 0.4s var(--sortie);
+  }
+  .faq__signe::after {
+    rotate: 90deg;
+  }
+  .faq details[open] .faq__signe {
+    background: var(--accent);
+    border-color: transparent;
+    color: var(--sur-accent);
+    transform: rotate(180deg);
+  }
+  .faq details[open] .faq__signe::after {
+    rotate: 0deg;
+  }
+  .faq details p {
+    padding-block-end: 1.1rem;
+    color: var(--encre-2);
+    max-inline-size: 38rem;
+  }
+  /* Ouverture animée (navigateurs récents) */
+  .faq details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 0.45s var(--sortie),
+      content-visibility 0.45s allow-discrete;
+  }
+  .faq details[open]::details-content {
+    block-size: auto;
+  }
+
+  @media (min-width: 66em) {
+    .contact__grille {
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+</style>

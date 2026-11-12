@@ -1,0 +1,140 @@
+---
+/** Section 02 — Preuves : les projets en vedette, puis la liste des autres réalisations. */
+import TitreSection from '../TitreSection.astro';
+import CarteProjet from '../CarteProjet.astro';
+import Niveaux from '../Niveaux.astro';
+import ChoixLecture from '../ChoixLecture.astro';
+import Techno from '../Techno.astro';
+import { ui } from '@/i18n/ui';
+import type { Langue } from '@/i18n';
+import { autresRealisations, projetsVedettes } from '@/data/projets';
+import { competences } from '@/data/competences';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const verbe = (id: string) => competences.find((c) => c.id === id);
+---
+
+<section class="section section--bande" id="projets" data-section="projets" aria-labelledby="titre-projets">
+  <div class="conteneur">
+    <TitreSection
+      numero={2}
+      id="projets"
+      etiquette={ui.projets.etiquette[l]}
+      titre={ui.projets.titre[l]}
+      intro={ui.projets.intro[l]}
+    />
+    <div class="projets__lecture" data-revele>
+      <ChoixLecture langue={l} />
+    </div>
+
+    <div class="vedettes">
+      {projetsVedettes.map((p, i) => <CarteProjet projet={p} langue={l} large={i === 0} delai={i === 0 ? 0 : ((i - 1) % 2) * 0.1} />)}
+    </div>
+
+    <h3 class="titre-3 autres__titre" data-revele>{ui.projets.autres[l]}</h3>
+    <ul class="autres" role="list">
+      {
+        autresRealisations.map((p) => (
+          <li class="autre" id={`r-${p.slug}`} data-revele>
+            <p class="autre__repere etiquette">{p.periode[l]}</p>
+            <div class="autre__corps">
+              <h4 class="autre__titre">{p.titre[l]}</h4>
+              <Niveaux texte={p.accroche} langue={l} class="autre__texte" />
+            </div>
+            <div class="autre__meta">
+              <p class="autre__cadre">{p.cadre[l]}</p>
+              <ul class="puces">
+                {p.competences.map((id) => (
+                  <li class="puce">
+                    <b>C{verbe(id)?.numero}</b>
+                    {verbe(id)?.verbe[l]}
+                  </li>
+                ))}
+                {p.technologies.map((t) => (
+                  <Techno nom={t} />
+                ))}
+              </ul>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .projets__lecture {
+    margin-block: calc(-1 * clamp(1rem, 3vw, 2.5rem)) clamp(2rem, 4vw, 3.25rem);
+  }
+  .vedettes {
+    display: grid;
+    gap: clamp(2.75rem, 6vw, 5rem) clamp(1.5rem, 3.5vw, 3rem);
+  }
+  @media (min-width: 48em) {
+    .vedettes {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .vedettes > :global(.carte--large) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .autres__titre {
+    margin-block: clamp(4rem, 9vw, 7rem) 1.5rem;
+  }
+  .autres {
+    margin: 0;
+    border-block-start: 2px solid var(--encre);
+  }
+  .autre {
+    display: grid;
+    gap: 0.5rem 2rem;
+    padding-block: 1.4rem;
+    border-block-end: 1px solid var(--trait);
+    scroll-margin-top: calc(var(--entete-h) + 1rem);
+  }
+  .autre:target {
+    background: color-mix(in oklch, var(--accent) 20%, transparent);
+    box-shadow: 0 0 0 0.75rem color-mix(in oklch, var(--accent) 20%, transparent);
+    border-radius: 2px;
+  }
+  .autre__repere {
+    color: var(--encre-2);
+    padding-block-start: 0.3rem;
+  }
+  .autre__titre {
+    font-family: var(--f-titre);
+    font-size: var(--t-l);
+    font-weight: var(--sous-titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: calc(var(--titre-interlettre) * 0.5);
+    line-height: 1.2;
+    margin-block-end: 0.35rem;
+  }
+  .autre :global(.autre__texte) {
+    color: var(--encre-2);
+    max-inline-size: 40rem;
+  }
+  .autre__meta {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+  }
+  .autre__cadre {
+    font-size: var(--t-s);
+    font-weight: 600;
+  }
+  .puce b {
+    font-weight: 750;
+    color: var(--accent-encre);
+  }
+  @media (min-width: 62em) {
+    .autre {
+      grid-template-columns: 9rem minmax(0, 1.4fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+</style>

@@ -1,0 +1,53 @@
+---
+/** Page introuvable. Bilingue, car on ne connaît pas la langue du visiteur. */
+import Base from '@/layouts/Base.astro';
+import Icone from '@/components/Icone.astro';
+import { ui } from '@/i18n/ui';
+import { routes } from '@/i18n';
+
+const versions = { fr: routes.accueil('fr'), en: routes.accueil('en') };
+---
+
+<Base langue="fr" versions={versions} titre="404 — Page introuvable · Page not found">
+  <meta name="robots" content="noindex" slot="head" />
+  <section class="erreur conteneur">
+    <p class="erreur__code" aria-hidden="true">404</p>
+    <h1 class="titre-2">{ui.erreur.titre.fr}</h1>
+    <p class="chapo">{ui.erreur.texte.fr}</p>
+    <p class="chapo" lang="en">{ui.erreur.titre.en} {ui.erreur.texte.en}</p>
+    <p class="erreur__actions">
+      <a class="bouton" href={routes.accueil('fr')}>
+        <Icone nom="fleche-gauche" />
+        {ui.commun.retourAccueil.fr}
+      </a>
+      <a class="bouton bouton--contour" href={routes.accueil('en')} lang="en" hreflang="en">{ui.commun.retourAccueil.en}</a>
+    </p>
+  </section>
+</Base>
+
+<style>
+  .erreur {
+    display: grid;
+    gap: 1.1rem;
+    justify-items: start;
+    align-content: center;
+    min-block-size: calc(100svh - var(--entete-h) - 12rem);
+    padding-block: clamp(3rem, 10vw, 7rem);
+  }
+  .erreur__code {
+    font-family: var(--f-titre);
+    font-size: clamp(6rem, 26vw, 19rem);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: 0.8;
+    color: transparent;
+    -webkit-text-stroke: 2px var(--accent-encre);
+  }
+  .erreur__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-block-start: 1rem;
+  }
+</style>

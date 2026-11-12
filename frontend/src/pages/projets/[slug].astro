@@ -1,0 +1,11 @@
+---
+import FicheProjet from '@/components/FicheProjet.astro';
+import { projetsVedettes } from '@/data/projets';
+
+export function getStaticPaths() {
+  return projetsVedettes.map((projet) => ({ params: { slug: projet.slug }, props: { projet } }));
+}
+const { projet } = Astro.props;
+---
+
+<FicheProjet projet={projet} langue="fr" />

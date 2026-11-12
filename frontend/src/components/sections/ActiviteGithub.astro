@@ -1,0 +1,193 @@
+---
+/**
+ * Activité GitHub des douze derniers mois, sous forme de calendrier.
+ * Les chiffres sont lus une fois, à la construction du site (donc à chaque mise en ligne) :
+ * le navigateur du visiteur ne contacte aucun service extérieur.
+ * Si le service ne répond pas, la section n'est simplement pas affichée.
+ */
+import Icone from '../Icone.astro';
+import { profil } from '@/data/profil';
+import type { Langue } from '@/i18n';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const pseudo = profil.liens.github.split('/').pop()!;
+
+interface Jour {
+  date: string;
+  count: number;
+  level: number;
+}
+let jours: Jour[] = [];
+let total = 0;
+try {
+  const reponse = await fetch(`https://github-contributions-api.jogruber.de/v4/${pseudo}?y=last`, { signal: AbortSignal.timeout(10_000) });
+  if (reponse.ok) {
+    const donnees = await reponse.json();
+    jours = donnees.contributions ?? [];
+    total = donnees.total?.lastYear ?? jours.reduce((s, j) => s + j.count, 0);
+  }
+} catch {
+  /* hors connexion pendant la construction : pas de calendrier */
+}
+
+// Découpage en semaines (colonnes), du lundi au dimanche.
+const rang = (iso: string) => (new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7;
+const semaines: (Jour | null)[][] = [];
+for (const j of jours) {
+  if (!semaines.length || rang(j.date) === 0) semaines.push(Array(7).fill(null));
+  semaines.at(-1)![rang(j.date)] = j;
+}
+const region = l === 'fr' ? 'fr-FR' : 'en-GB';
+const mois = (iso: string) => new Intl.DateTimeFormat(region, { month: 'short', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`));
+const premierJour = (s: (Jour | null)[]) => s.find(Boolean)!.date;
+const enTetes = semaines.map((s, i) => (i === 0 || mois(premierJour(s)) !== mois(premierJour(semaines[i - 1]!)) ? mois(premierJour(s)) : ''));
+const joursActifs = jours.filter((j) => j.count > 0).length;
+const dateLisible = (iso: string) =>
+  new Intl.DateTimeFormat(region, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`));
+
+const t = {
+  titre: { fr: 'Activité GitHub', en: 'GitHub activity' },
+  resume: {
+    fr: `${total} contributions sur les douze derniers mois, réparties sur ${joursActifs} jours.`,
+    en: `${total} contributions over the last twelve months, spread over ${joursActifs} days.`,
+  },
+  note: {
+    fr: "Une contribution, c'est par exemple un envoi de code (commit) sur un projet. Les projets de l'IUT sont sur le GitLab de l'université et ne sont pas comptés ici.",
+    en: "A contribution is, for example, a code commit to a project. University projects live on the university's GitLab and are not counted here.",
+  },
+  profil: { fr: 'Voir mon profil GitHub', en: 'View my GitHub profile' },
+  moins: { fr: 'Moins', en: 'Less' },
+  plus: { fr: 'Plus', en: 'More' },
+  calendrier: { fr: 'Calendrier des contributions, une colonne par semaine', en: 'Contribution calendar, one column per week' },
+  nouvelOnglet: { fr: '(nouvel onglet)', en: '(new tab)' },
+};
+const infobulle = (j: Jour) => `${dateLisible(j.date)} : ${j.count}`;
+---
+
+{
+  jours.length > 0 && (
+    <section class="github conteneur" aria-labelledby="titre-github">
+      <div class="github__tete" data-revele>
+        <h3 class="titre-3" id="titre-github">
+          {t.titre[l]}
+        </h3>
+        <p class="chapo">{t.resume[l]}</p>
+        <p class="github__note">{t.note[l]}</p>
+        <a class="lien" href={profil.liens.github} target="_blank" rel="me noopener">
+          <Icone nom="github" taille={18} />
+          {t.profil[l]}
+          <span class="cache-visuel"> {t.nouvelOnglet[l]}</span>
+        </a>
+      </div>
+
+      <div class="github__cadre" data-revele style="--delai: .08s">
+        <div class="github__defile" role="img" aria-label={`${t.calendrier[l]}. ${t.resume[l]}`} tabindex="0">
+          <div class="github__grille" style={`--semaines: ${semaines.length}`}>
+            {enTetes.map((m, i) => (
+              <span class="github__mois" style={`grid-column: ${i + 1}`}>
+                {m}
+              </span>
+            ))}
+            {semaines.map((s, i) =>
+              s.map((j, r) => j && <i data-niveau-activite={j.level} style={`grid-column: ${i + 1}; grid-row: ${r + 2}`} title={infobulle(j)} />),
+            )}
+          </div>
+        </div>
+        <p class="github__legende" aria-hidden="true">
+          {t.moins[l]}
+          {[0, 1, 2, 3, 4].map((n) => (
+            <i data-niveau-activite={n} />
+          ))}
+          {t.plus[l]}
+        </p>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .github {
+    display: grid;
+    gap: 2rem clamp(2rem, 6vw, 5rem);
+    padding-block-end: var(--section);
+  }
+  .github__tete {
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+    justify-items: start;
+  }
+  .github__note {
+    font-size: var(--t-s);
+    color: var(--encre-2);
+    max-inline-size: 30rem;
+  }
+  .github__cadre {
+    min-inline-size: 0;
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon);
+    background: var(--surface);
+  }
+  /* Sur petit écran, le calendrier défile à l'horizontale dans son cadre (au doigt ou au clavier) */
+  .github__defile {
+    overflow-x: auto;
+    padding-block-end: 0.5rem;
+    scrollbar-width: thin;
+    direction: rtl; /* on voit d'abord les semaines les plus récentes */
+  }
+  .github__grille {
+    direction: ltr;
+    display: grid;
+    grid-template-columns: repeat(var(--semaines), 0.72rem);
+    grid-template-rows: 1.2rem repeat(7, 0.72rem);
+    gap: 0.2rem;
+    inline-size: max-content;
+    margin-inline: auto;
+  }
+  .github__mois {
+    grid-row: 1;
+    font-size: 0.6875rem;
+    color: var(--encre-2);
+    white-space: nowrap;
+    overflow: visible;
+    inline-size: 0;
+  }
+  i[data-niveau-activite] {
+    display: block;
+    inline-size: 0.72rem;
+    block-size: 0.72rem;
+    border-radius: 0.18rem;
+    background: color-mix(in oklch, var(--encre) 9%, transparent);
+  }
+  i[data-niveau-activite='1'] {
+    background: color-mix(in oklch, var(--accent-encre) 35%, transparent);
+  }
+  i[data-niveau-activite='2'] {
+    background: color-mix(in oklch, var(--accent-encre) 58%, transparent);
+  }
+  i[data-niveau-activite='3'] {
+    background: color-mix(in oklch, var(--accent-encre) 80%, transparent);
+  }
+  i[data-niveau-activite='4'] {
+    background: var(--accent-encre);
+  }
+  .github__legende {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.25rem;
+    margin-block-start: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--encre-2);
+  }
+  @media (min-width: 70em) {
+    .github {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      align-items: start;
+    }
+  }
+</style>

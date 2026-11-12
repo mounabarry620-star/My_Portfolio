@@ -1,0 +1,35 @@
+---
+/** Une technologie sous forme de puce : son logo (s'il existe chez Devicon) et son nom. */
+import Logo from './Logo.astro';
+import { logosDe } from '@/data/logos';
+
+interface Props {
+  nom: string;
+  balise?: 'li' | 'span';
+}
+const { nom, balise: Balise = 'li' } = Astro.props;
+const logos = logosDe(nom);
+---
+
+<Balise class="puce techno">
+  {
+    logos.length > 0 && (
+      <span class="techno__logos" aria-hidden="true">
+        {logos.map((n) => <Logo nom={n} />)}
+      </span>
+    )
+  }
+  {nom}
+</Balise>
+
+<style>
+  /* Pastille claire derrière les logos : ils restent lisibles dans les thèmes sombres */
+  .techno__logos {
+    display: inline-flex;
+    gap: 0.2rem;
+    padding: 0.12rem 0.22rem;
+    margin-inline-start: -0.35rem;
+    border-radius: 0.35rem;
+    background: #fff;
+  }
+</style>

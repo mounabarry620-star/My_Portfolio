@@ -1,0 +1,473 @@
+---
+/**
+ * En-tête du site : marque, navigation en « plan de ligne » (un arrêt par section),
+ * réglages (niveau de lecture, langue, thème) et menu mobile.
+ */
+import Icone from './Icone.astro';
+import ChoixThemes from './ChoixThemes.astro';
+import { ui } from '@/i18n/ui';
+import { routes, sections, type Langue } from '@/i18n';
+import { profil } from '@/data/profil';
+
+interface Props {
+  langue: Langue;
+  /** Adresse de la même page dans l'autre langue. */
+  autreLangue: { langue: Langue; href: string };
+  /** Sur l'accueil, les liens pointent vers les sections de la page. */
+  surAccueil?: boolean;
+}
+const { langue: l, autreLangue, surAccueil = false } = Astro.props;
+const lienSection = (id: string) => (surAccueil ? `#${id}` : routes.section(l, id));
+---
+
+<header class="entete" data-entete>
+  <div class="entete__barre conteneur">
+    <a class="marque" href={routes.accueil(l)} aria-label={`${profil.nomComplet} — ${ui.commun.retourAccueil[l]}`}>
+      <svg class="marque__signe" viewBox="0 0 32 32" width="36" height="36" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="var(--accent)"></rect>
+        <path
+          d="M6.5 22.5v-13l5.25 7.6L17 9.5v13M21 9.5h2.3a3.3 3.3 0 0 1 0 6.6H21m0 0h2.9a3.2 3.2 0 0 1 0 6.4H21v-13"
+          fill="none"
+          stroke="var(--sur-accent)"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
+      </svg>
+      <span class="marque__nom">{profil.nomComplet}</span>
+    </a>
+
+    <nav class="ligne" aria-label={ui.nav.titre[l]}>
+      <ol role="list">
+        {
+          sections.map((id) => (
+            <li>
+              <a href={lienSection(id)} data-arret={id}>
+                <span class="ligne__arret" aria-hidden="true" />
+                {ui.nav[id][l]}
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+
+    <div class="outils">
+      <div class="lecture" role="group" aria-label={`${ui.reglages.lecture[l]} — ${ui.reglages.lectureAide[l]}`}>
+        <button type="button" data-choix-lecture="simple" aria-pressed="true">{ui.reglages.simple[l]}</button>
+        <button type="button" data-choix-lecture="technique" aria-pressed="false">{ui.reglages.technique[l]}</button>
+      </div>
+
+      <a
+        class="outil outil--langue"
+        href={autreLangue.href}
+        hreflang={autreLangue.langue}
+        lang={autreLangue.langue}
+        aria-label={`${autreLangue.langue.toUpperCase()} — ${ui.reglages.changerLangue[l]}`}
+        title={ui.reglages.changerLangue[l]}
+        data-lien-langue
+      >
+        {autreLangue.langue.toUpperCase()}
+      </a>
+
+      <button
+        type="button"
+        class="outil"
+        popovertarget="themes"
+        aria-label={ui.reglages.choisirTheme[l]}
+        title={ui.reglages.choisirTheme[l]}
+      >
+        <Icone nom="theme" taille={20} />
+      </button>
+
+      <button
+        type="button"
+        class="outil outil--palette"
+        data-ouvrir-palette
+        aria-label={ui.reglages.commandes[l]}
+        title={`${ui.reglages.commandes[l]} (Ctrl K)`}
+        aria-haspopup="dialog"
+      >
+        <Icone nom="recherche" taille={20} />
+      </button>
+
+      <button type="button" class="outil outil--menu" data-ouvrir-menu aria-label={ui.commun.menu[l]} aria-haspopup="dialog">
+        <Icone nom="menu" taille={22} />
+      </button>
+    </div>
+  </div>
+  <div class="entete__progression" aria-hidden="true"></div>
+</header>
+
+<!-- Choix du thème (fenêtre native « popover ») -->
+<div id="themes" class="themes-volet" popover>
+  <p class="etiquette">{ui.reglages.choisirTheme[l]}</p>
+  <ChoixThemes langue={l} />
+</div>
+
+<!-- Menu mobile (fenêtre modale native) -->
+<dialog class="menu" data-menu aria-label={ui.commun.menu[l]}>
+  <div class="menu__tete">
+    <span class="etiquette">{ui.commun.menu[l]}</span>
+    <button type="button" class="outil" data-fermer-menu aria-label={ui.commun.fermer[l]}>
+      <Icone nom="fermer" taille={22} />
+    </button>
+  </div>
+  <nav aria-label={ui.nav.titre[l]}>
+    <ol role="list" class="menu__liens">
+      {
+        sections.map((id, i) => (
+          <li>
+            <a href={lienSection(id)} data-fermer-menu>
+              <span class="pastille">{String(i + 1).padStart(2, '0')}</span>
+              {ui.nav[id][l]}
+            </a>
+          </li>
+        ))
+      }
+      <li>
+        <a href={routes.cv(l)} data-fermer-menu>
+          <span class="pastille">CV</span>
+          {ui.contact.cvPage[l]}
+        </a>
+      </li>
+    </ol>
+  </nav>
+  <div class="menu__reglages">
+    <div>
+      <p class="etiquette">{ui.reglages.lecture[l]}</p>
+      <div class="lecture lecture--large" role="group" aria-label={ui.reglages.lecture[l]}>
+        <button type="button" data-choix-lecture="simple" aria-pressed="true">{ui.reglages.simple[l]}</button>
+        <button type="button" data-choix-lecture="technique" aria-pressed="false">{ui.reglages.technique[l]}</button>
+      </div>
+      <p class="menu__aide">{ui.reglages.lectureAide[l]}</p>
+    </div>
+    <div>
+      <p class="etiquette">{ui.reglages.theme[l]}</p>
+      <ChoixThemes langue={l} />
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .entete {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 50;
+    view-transition-name: entete;
+    background: color-mix(in oklch, var(--fond) 88%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border-block-end: 1px solid transparent;
+    transition: border-color 0.3s;
+  }
+  .entete[data-defile] {
+    border-block-end-color: var(--trait);
+  }
+  .entete__barre {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    block-size: var(--entete-h);
+  }
+
+  /* Barre de progression de lecture, pilotée par le défilement (CSS seul) */
+  .entete__progression {
+    position: absolute;
+    inset: auto 0 -1px 0;
+    block-size: 2px;
+    background: var(--accent-encre);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+  }
+  @supports (animation-timeline: scroll()) {
+    .entete__progression {
+      animation: progression linear both;
+      animation-timeline: scroll(root block);
+    }
+    @keyframes progression {
+      to {
+        transform: scaleX(1);
+      }
+    }
+  }
+
+  .marque {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    font-family: var(--f-etiquette);
+    font-weight: 650;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    border-radius: var(--rayon-s);
+  }
+  .marque__signe {
+    flex: none;
+    transition: transform 0.6s var(--ressort);
+  }
+  .marque:hover .marque__signe {
+    transform: rotate(-8deg) scale(1.06);
+  }
+  .marque__nom {
+    display: none;
+  }
+
+  /* ---- Navigation « plan de ligne » ---- */
+  .ligne {
+    display: none;
+  }
+  .ligne ol {
+    display: flex;
+    align-items: center;
+    margin: 0;
+  }
+  .ligne li {
+    display: flex;
+    align-items: center;
+  }
+  .ligne li + li::before {
+    content: '';
+    inline-size: clamp(0.6rem, 1.5vw, 1.6rem);
+    block-size: 2px;
+    margin-inline: 0.15rem;
+    background: var(--trait-fort);
+    border-radius: 2px;
+    transition: background-color 0.35s;
+  }
+  .ligne a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.4rem;
+    font-family: var(--f-etiquette);
+    font-size: 0.875rem;
+    font-weight: 550;
+    letter-spacing: 0;
+    color: var(--encre-2);
+    text-decoration: none;
+    white-space: nowrap;
+    border-radius: var(--rayon-s);
+    transition: color 0.25s;
+  }
+  .ligne a:hover {
+    color: var(--encre);
+  }
+  .ligne__arret {
+    inline-size: 0.625rem;
+    block-size: 0.625rem;
+    border-radius: 50%;
+    border: 2px solid var(--trait-fort);
+    background: var(--fond);
+    transition:
+      background-color 0.35s,
+      border-color 0.35s,
+      transform 0.5s var(--ressort);
+  }
+  /* Arrêt en cours */
+  .ligne a[aria-current='true'] {
+    color: var(--encre);
+    font-weight: 700;
+  }
+  .ligne a[aria-current='true'] .ligne__arret {
+    background: var(--accent);
+    border-color: var(--accent-encre);
+    transform: scale(1.45);
+  }
+  /* Arrêts et tronçons déjà parcourus */
+  .ligne li:has(~ li a[aria-current='true']) .ligne__arret {
+    background: var(--accent-encre);
+    border-color: var(--accent-encre);
+  }
+  .ligne li:is(:has(a[aria-current='true']), :has(~ li a[aria-current='true']))::before {
+    background: var(--accent-encre);
+  }
+
+  /* ---- Outils ---- */
+  .outils {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .outil {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border-radius: 50%;
+    font-family: var(--f-etiquette);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    color: var(--encre);
+    transition:
+      background-color 0.25s,
+      transform 0.25s var(--sortie);
+  }
+  .outil:hover {
+    background: color-mix(in oklch, var(--encre) 9%, transparent);
+  }
+  .outil:active {
+    transform: scale(0.92);
+  }
+  .outil--palette,
+  .entete .lecture {
+    display: none;
+  }
+
+  .lecture--large {
+    display: flex;
+    margin-block: 0.6rem 0.5rem;
+  }
+  .lecture--large :global(button) {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    font-size: 0.9375rem;
+  }
+  :global([data-theme='machine']) .outil {
+    border-radius: var(--rayon-s);
+  }
+
+  /* ---- Volet des thèmes ---- */
+  .themes-volet {
+    position: fixed;
+    inset: calc(var(--entete-h) + 0.5rem) var(--gouttiere) auto auto;
+    inline-size: min(22rem, 100vw - 2 * var(--gouttiere));
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon);
+    background: var(--surface);
+    color: var(--encre);
+    box-shadow: var(--ombre);
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+    transform-origin: 100% 0;
+    transition:
+      opacity 0.25s var(--sortie),
+      transform 0.35s var(--sortie),
+      overlay 0.35s allow-discrete,
+      display 0.35s allow-discrete;
+  }
+  .themes-volet:popover-open {
+    opacity: 1;
+    transform: none;
+  }
+  @starting-style {
+    .themes-volet:popover-open {
+      opacity: 0;
+      transform: translateY(-0.5rem) scale(0.98);
+    }
+  }
+  .themes-volet .etiquette {
+    margin-block-end: 0.75rem;
+    color: var(--encre-2);
+  }
+
+  /* ---- Menu mobile ---- */
+  .menu {
+    position: fixed;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100dvh;
+    padding: 0.75rem var(--gouttiere) 2rem;
+    background: var(--fond);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    opacity: 0;
+    transform: translateY(-1rem);
+    transition:
+      opacity 0.3s var(--sortie),
+      transform 0.45s var(--sortie),
+      overlay 0.45s allow-discrete,
+      display 0.45s allow-discrete;
+  }
+  .menu[open] {
+    opacity: 1;
+    transform: none;
+  }
+  @starting-style {
+    .menu[open] {
+      opacity: 0;
+      transform: translateY(-1rem);
+    }
+  }
+  .menu::backdrop {
+    background: var(--fond);
+  }
+  .menu__tete {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    block-size: calc(var(--entete-h) - 1.5rem);
+    margin-block-end: 1.5rem;
+    color: var(--encre-2);
+  }
+  .menu__liens {
+    display: grid;
+    margin: 0;
+    border-block-start: 1px solid var(--trait);
+  }
+  .menu__liens a {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 0.95rem;
+    border-block-end: 1px solid var(--trait);
+    font-family: var(--f-titre);
+    font-size: clamp(1.5rem, 6.4vw, 2.1rem);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: 1.1;
+    text-decoration: none;
+  }
+  .menu__reglages {
+    display: grid;
+    gap: 1.75rem;
+    margin-block-start: 2rem;
+  }
+  .menu__reglages .etiquette {
+    color: var(--encre-2);
+    margin-block-end: 0.5rem;
+  }
+  .menu__aide {
+    font-size: var(--t-s);
+    color: var(--encre-2);
+  }
+
+  /* ---- Écrans larges ---- */
+  @media (min-width: 40em) {
+    .entete .lecture {
+      display: inline-flex;
+      margin-inline-end: 0.35rem;
+    }
+    .outil--palette {
+      display: inline-grid;
+    }
+  }
+  @media (min-width: 72em) {
+    .ligne {
+      display: block;
+    }
+    .outil--menu {
+      display: none;
+    }
+  }
+  @media (min-width: 88em) {
+    .marque__nom {
+      display: inline;
+    }
+  }
+
+  @media print {
+    .entete,
+    .themes-volet,
+    .menu {
+      display: none !important;
+    }
+  }
+</style>

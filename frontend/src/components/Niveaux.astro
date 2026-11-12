@@ -1,0 +1,19 @@
+---
+/**
+ * Affiche un texte en deux niveaux de lecture. Les deux versions sont dans la page ;
+ * la feuille de style n'en montre qu'une, selon le réglage « Simple / Technique ».
+ */
+import type { DeuxNiveaux, Langue } from '@/i18n';
+
+interface Props {
+  texte: DeuxNiveaux;
+  langue: Langue;
+  /** Balise HTML à produire (p par défaut). */
+  balise?: 'p' | 'span' | 'li' | 'div';
+  class?: string;
+}
+const { texte, langue, balise: Balise = 'p', class: classe } = Astro.props;
+---
+
+<Balise class={classe} data-niveau="simple">{texte.simple[langue]}</Balise>
+<Balise class={classe} data-niveau="technique">{texte.technique[langue]}</Balise>

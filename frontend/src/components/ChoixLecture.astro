@@ -1,0 +1,21 @@
+---
+/**
+ * Interrupteur « Simple / Technique », à placer près d'un texte qui existe dans les deux
+ * niveaux. Il agit sur toute la page (même réglage que celui de l'en-tête).
+ */
+import { ui } from '@/i18n/ui';
+import type { Langue } from '@/i18n';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+---
+
+<p class="choix-lecture">
+  <span class="etiquette" aria-hidden="true">{ui.reglages.lecture[l]}</span>
+  <span class="lecture" role="group" aria-label={`${ui.reglages.lecture[l]} — ${ui.reglages.lectureAide[l]}`}>
+    <button type="button" data-choix-lecture="simple" aria-pressed="true">{ui.reglages.simple[l]}</button>
+    <button type="button" data-choix-lecture="technique" aria-pressed="false">{ui.reglages.technique[l]}</button>
+  </span>
+</p>

@@ -1,0 +1,26 @@
+---
+/** En-tête de section : pastille numérotée (comme une ligne de transport), étiquette, titre, chapô. */
+interface Props {
+  numero: number;
+  etiquette: string;
+  titre: string;
+  intro?: string;
+  id: string;
+}
+const { numero, etiquette, titre, intro, id } = Astro.props;
+---
+
+<header class="section__tete">
+  <p class="section__repere etiquette" data-revele>
+    <span class="pastille">{String(numero).padStart(2, '0')}</span>
+    {etiquette}
+  </p>
+  <h2 class="titre-2" id={`titre-${id}`} data-revele style="--delai: .06s">{titre}</h2>
+  {
+    intro && (
+      <p class="chapo" data-revele style="--delai: .12s">
+        {intro}
+      </p>
+    )
+  }
+</header>

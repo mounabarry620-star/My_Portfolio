@@ -1,0 +1,13 @@
+# dépendances et sorties de build, dans tous les sous-dossiers
+node_modules/
+dist/
+.astro/
+.vercel/
+
+# fichiers locaux
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+*:Zone.Identifier

@@ -1,0 +1,231 @@
+---
+/**
+ * Carte d'un projet sur la page d'accueil. Toute la carte est un lien vers la fiche.
+ * L'image porte un « view-transition-name » : au clic, elle glisse et s'agrandit
+ * jusqu'à sa place dans la fiche du projet (transition de vue native).
+ */
+import { Picture } from 'astro:assets';
+import Niveaux from './Niveaux.astro';
+import Icone from './Icone.astro';
+import Techno from './Techno.astro';
+import { ui } from '@/i18n/ui';
+import { routes, type Langue } from '@/i18n';
+import type { Projet } from '@/data/projets';
+import { competences } from '@/data/competences';
+
+interface Props {
+  projet: Projet;
+  langue: Langue;
+  /** Grande carte horizontale (premier projet). */
+  large?: boolean;
+  delai?: number;
+}
+const { projet: p, langue: l, large = false, delai = 0 } = Astro.props;
+const comps = competences.filter((c) => p.competences.includes(c.id));
+// Grande carte : le cadre suit les proportions de l'image pour ne rien couper.
+const proportions = large && p.couverture ? Math.min(2.1, Math.max(1.5, p.couverture.image.width / p.couverture.image.height)) : undefined;
+---
+
+<article class:list={['carte', { 'carte--large': large }]} data-revele style={`--delai: ${delai}s`}>
+  <a class="carte__lien" href={routes.projet(l, p.slug)} aria-labelledby={`carte-${p.slug}`}>
+    {
+      p.couverture && (
+        <div
+          class="carte__image"
+          style={`view-transition-name: couverture-${p.slug};${proportions ? ` aspect-ratio: ${proportions.toFixed(3)};` : ''}`}
+        >
+          <Picture
+            src={p.couverture.image}
+            alt={p.couverture.alt[l]}
+            formats={['avif']}
+            fallbackFormat="webp"
+            widths={large ? [480, 800, 1200, 1600] : [400, 640, 960, 1280]}
+            sizes={large ? '(min-width: 62em) 50vw, 100vw' : '(min-width: 48em) 46vw, 100vw'}
+            loading="lazy"
+            decoding="async"
+            quality={58}
+          />
+          {p.distinction && <span class="carte__prix puce puce--accent">★ {p.distinction[l]}</span>}
+          {p.enCours && <span class="carte__prix puce puce--pleine">{ui.commun.enCours[l]}</span>}
+          <span class="carte__voir" aria-hidden="true">
+            <Icone nom="fleche-sortie" taille={22} />
+          </span>
+        </div>
+      )
+    }
+    <div class="carte__texte">
+      <p class="etiquette carte__genre">
+        {p.genre[l]}<span aria-hidden="true"> · </span>{p.annee}
+      </p>
+      <h3 class="titre-3" id={`carte-${p.slug}`}>{p.titre[l]}</h3>
+      <Niveaux texte={p.accroche} langue={l} class="carte__accroche" />
+      <p class="carte__role">
+        <span class="etiquette">{ui.projets.role[l]}</span>
+        {p.role[l]}
+      </p>
+      <ul class="puces carte__technos" aria-label={ui.projets.technologies[l]}>
+        {p.technologies.map((t) => <Techno nom={t} />)}
+      </ul>
+      <ul class="puces" aria-label={ui.projets.competences[l]}>
+        {
+          comps.map((c) => (
+            <li class="puce">
+              <b>C{c.numero}</b>
+              {c.verbe[l]}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </a>
+</article>
+
+<style>
+  .carte {
+    container-type: inline-size;
+  }
+  .carte__lien {
+    display: grid;
+    gap: 1.25rem;
+    block-size: 100%;
+    align-content: start;
+    text-decoration: none;
+    border-radius: var(--rayon);
+  }
+  .carte__image {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: clip;
+    border-radius: var(--rayon);
+    background: var(--fond-2);
+    box-shadow: inset 0 0 0 1px var(--trait);
+  }
+  .carte__image :global(picture),
+  .carte__image :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+  .carte__image :global(img) {
+    object-fit: cover;
+    object-position: 50% 0;
+    transition: scale 0.9s var(--sortie);
+  }
+  /* Léger glissement de l'image pendant le défilement (CSS seul, navigateurs récents) */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .carte__image :global(img) {
+        animation: glisse linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 100%;
+      }
+    }
+    @keyframes glisse {
+      from {
+        transform: scale(1.07) translateY(-2.6%);
+      }
+      to {
+        transform: scale(1.07) translateY(2.6%);
+      }
+    }
+  }
+  .carte__image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--trait);
+    pointer-events: none;
+  }
+  .carte__prix {
+    position: absolute;
+    inset: 0.85rem auto auto 0.85rem;
+    box-shadow: var(--ombre);
+  }
+  .carte__voir {
+    position: absolute;
+    inset: auto 0.85rem 0.85rem auto;
+    display: grid;
+    place-items: center;
+    inline-size: 3rem;
+    block-size: 3rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--sur-accent);
+    scale: 0;
+    transition: scale 0.5s var(--ressort);
+  }
+  @media (hover: hover) {
+    .carte__lien:hover .carte__image :global(img) {
+      scale: 1.04;
+    }
+    .carte__lien:hover .carte__voir,
+    .carte__lien:focus-visible .carte__voir {
+      scale: 1;
+    }
+    .carte__lien:hover .titre-3 {
+      text-decoration: underline;
+      text-decoration-thickness: 0.06em;
+      text-underline-offset: 0.16em;
+    }
+  }
+
+  .carte__texte {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+  }
+  .carte__genre {
+    color: var(--encre-2);
+  }
+  .carte__texte :global(.carte__accroche) {
+    color: var(--encre-2);
+    max-inline-size: 36rem;
+  }
+  .carte__role {
+    font-size: var(--t-s);
+    font-weight: 600;
+  }
+  .carte__role .etiquette {
+    display: block;
+    font-size: 0.625rem;
+    color: var(--encre-2);
+    margin-block-end: 0.1rem;
+  }
+  .puces {
+    margin-block-start: 0.35rem;
+  }
+  .carte__technos :global(.puce) {
+    font-size: 0.78rem;
+    padding: 0.22rem 0.6rem;
+  }
+  .puce b {
+    font-weight: 750;
+    color: var(--accent-encre);
+  }
+
+  .carte--large .carte__image :global(img) {
+    animation: none;
+  }
+
+  /* Grande carte : image et texte côte à côte quand la place le permet */
+  @container (min-width: 52rem) {
+    .carte--large .carte__lien {
+      grid-template-columns: 1.45fr 1fr;
+      align-items: center;
+      gap: clamp(1.5rem, 4cqi, 3.5rem);
+    }
+    .carte--large .carte__texte {
+      gap: 0.85rem;
+    }
+    .carte--large .titre-3 {
+      font-size: var(--t-2xl);
+      font-weight: var(--titre-graisse);
+      letter-spacing: var(--titre-interlettre);
+      line-height: 1;
+    }
+    .carte--large :global(.carte__accroche) {
+      font-size: var(--t-l);
+    }
+  }
+</style>

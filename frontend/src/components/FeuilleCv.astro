@@ -1,0 +1,401 @@
+---
+/**
+ * Le CV sur une feuille A4, dans le même style que mon CV de stage : bandeau en haut,
+ * filet dégradé, nom en Yanone Kaffeesatz, titres de rubrique sur fond dégradé, texte
+ * en Raleway bleu, logos des technologies (Devicon).
+ * Toutes les dimensions sont en « millimètres de feuille » (variable --mm) : à l'écran la
+ * feuille se réduit comme une photo, à l'impression elle fait exactement 210 × 297 mm.
+ */
+import Icone from './Icone.astro';
+import Logo from './Logo.astro';
+import { cv } from '@/data/cv';
+import { logosDe } from '@/data/logos';
+import { profil } from '@/data/profil';
+import { routes, type Langue, type Texte } from '@/i18n';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const t = (v: string | Texte) => (typeof v === 'string' ? v : v[l]);
+
+const adresseSite = new URL(routes.accueil(l), Astro.site).href;
+const telephone = l === 'fr' ? profil.telephone.affichage : cv.coordonnees.telephoneIntl;
+const pseudo = (adresse: string) => adresse.split('/').pop();
+---
+
+<div class="feuille" lang={l} data-feuille-cv>
+  <div class="page">
+    <p class="bandeau">{cv.bandeau[l]}</p>
+    <div class="filet" aria-hidden="true"></div>
+
+    <header class="tete">
+      <div class="tete__gauche">
+        <h1 class="nom"><span>{profil.prenom}</span> <b>{profil.nom.toUpperCase()}</b></h1>
+        <p class="objectif">{cv.recherche.objet[l]} : <strong>{cv.recherche.dates[l]}</strong></p>
+        <p class="objectif__details">{cv.recherche.details[l]}</p>
+      </div>
+      <address class="contact">
+        <a class="contact__portfolio" href={adresseSite}>{l === 'fr' ? 'Mon portfolio' : 'My portfolio'}</a>
+        <a href={`tel:${profil.telephone.lien}`}><Icone nom="telephone" taille={13} />{telephone}</a>
+        <a href={`mailto:${profil.email}`}><Icone nom="courriel" taille={13} />{profil.email}</a>
+        <span>{cv.coordonnees.ville[l]} | {cv.coordonnees.mobilite[l]}</span>
+        <span class="contact__reseaux">
+          <a href={profil.liens.linkedin}><Icone nom="linkedin" taille={12} />{pseudo(profil.liens.linkedin)}</a>
+          <i aria-hidden="true">|</i>
+          <a href={profil.liens.github}><Icone nom="github" taille={12} />{pseudo(profil.liens.github)}</a>
+        </span>
+      </address>
+    </header>
+
+    <section>
+      <h2>{cv.rubriques.profil[l]}</h2>
+      <p class="texte">{cv.profil[l]}</p>
+    </section>
+
+    <section>
+      <h2>{cv.rubriques.projets[l]}</h2>
+      <ul class="puces">
+        {
+          cv.projets.map((p) => (
+            <li>
+              <strong>{t(p.nom)}</strong>, {p.nature[l]} ({p.cadre[l]}) : {p.texte[l]} <em>{p.outils}</em>
+            </li>
+          ))
+        }
+        {
+          cv.experiences.map((e) => (
+            <li>
+              <strong>{e.poste[l]}</strong> ({e.structure[l]}, {e.dates[l]}) : {e.texte[l]}
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section>
+      <h2>{cv.rubriques.competences[l]}</h2>
+      <div class="competences">
+        {
+          cv.competences.map((colonne) => (
+            <div class="competences__colonne">
+              {colonne.map((groupe) => (
+                <div>
+                  <h3>{groupe.titre[l]} :</h3>
+                  <ul>
+                    {groupe.outils.map((o) => (
+                      <li>
+                        {(o.logo ? [o.logo] : logosDe(o.nom)).map((n) => <Logo nom={n} />)}
+                        {o.nom}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section>
+      <h2>{cv.rubriques.diplomes[l]}</h2>
+      <ul class="formations">
+        {
+          cv.diplomes.map((d) => (
+            <li>
+              <span class="formations__dates">{d.dates}</span>
+              <span>
+                <strong>{d.titre[l]} — {d.lieu[l]}</strong>
+                {d.note && <span class="formations__note">{d.note[l]}</span>}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <div class="bas">
+      <section>
+        <h2>{cv.rubriques.langues[l]}</h2>
+        <ul class="simple">
+          {
+            cv.langues.map((lg) => (
+              <li>
+                <strong>{lg.nom[l]}{l === 'fr' ? ' :' : ':'}</strong> {lg.niveau[l]}
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+      <section>
+        <h2>{cv.rubriques.interets[l]}</h2>
+        <ul class="simple">
+          {cv.interets.map((i) => <li>{i[l]}</li>)}
+        </ul>
+      </section>
+    </div>
+  </div>
+</div>
+
+<style>
+  .feuille {
+    --bleu: #495cb2;
+    --bleu-fonce: #3c4d9a;
+    --degrade: linear-gradient(90deg, #c1f3db 0%, #a2d4f5 50%, #9bc1fb 100%);
+    container-type: inline-size;
+    inline-size: min(100%, 210mm);
+    margin-inline: auto;
+    background: #fff;
+    color: var(--bleu-fonce);
+    color-scheme: light;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    --mm: calc(100cqw / 210);
+    display: flex;
+    flex-direction: column;
+    gap: calc(3.4 * var(--mm));
+    min-block-size: calc(297 * var(--mm));
+    padding: calc(10 * var(--mm)) calc(14 * var(--mm)) calc(9 * var(--mm));
+    font-family: var(--police-raleway);
+    font-size: calc(3.3 * var(--mm));
+    font-variant-numeric: lining-nums;
+    line-height: 1.42;
+    letter-spacing: 0;
+  }
+  .page :is(p, ul, h1, h2, h3, address) {
+    margin: 0;
+    padding: 0;
+  }
+  .page ul {
+    list-style: none;
+  }
+  .page a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .page strong {
+    font-weight: 700;
+  }
+  .page :is(h2, h3) {
+    font-family: var(--police-raleway);
+  }
+
+  .bandeau {
+    font-size: calc(3.75 * var(--mm));
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .filet {
+    block-size: calc(0.9 * var(--mm));
+    margin-block-start: calc(-1.6 * var(--mm));
+    background: var(--degrade);
+  }
+
+  .tete {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: calc(5 * var(--mm));
+  }
+  .nom {
+    font-family: var(--police-yanone);
+    font-size: calc(12.4 * var(--mm));
+    font-weight: 300;
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    margin-block-end: calc(2 * var(--mm)) !important;
+  }
+  .nom b {
+    font-weight: 600;
+  }
+  .objectif {
+    font-size: calc(3.5 * var(--mm));
+    font-weight: 600;
+  }
+  .objectif__details {
+    font-size: calc(3.1 * var(--mm));
+  }
+  .contact {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: calc(1 * var(--mm));
+    font-style: normal;
+    font-size: calc(3.05 * var(--mm));
+    text-align: end;
+  }
+  .contact a,
+  .contact__reseaux {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(1.6 * var(--mm));
+  }
+  .contact :global(svg) {
+    inline-size: calc(3.4 * var(--mm));
+    block-size: calc(3.4 * var(--mm));
+    flex: none;
+  }
+  .contact__portfolio {
+    font-size: calc(3.3 * var(--mm));
+    font-weight: 700;
+    text-decoration: underline !important;
+  }
+  .contact__reseaux i {
+    font-style: normal;
+    opacity: 0.6;
+  }
+
+  /* Titre de rubrique : bande dégradée, comme sur le CV papier */
+  h2 {
+    margin-block-end: calc(2.2 * var(--mm)) !important;
+    padding: calc(1.3 * var(--mm)) calc(3 * var(--mm)) !important;
+    background: var(--degrade);
+    font-size: calc(3.55 * var(--mm));
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  section > :not(h2) {
+    padding-inline: calc(1 * var(--mm));
+  }
+  .texte {
+    text-align: justify;
+  }
+  .puces {
+    display: grid;
+    gap: calc(1.7 * var(--mm));
+  }
+  .puces li {
+    position: relative;
+    padding-inline-start: calc(4.5 * var(--mm));
+  }
+  .puces li::before {
+    content: '•';
+    position: absolute;
+    inset-inline-start: calc(0.5 * var(--mm));
+  }
+  .puces em {
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .competences {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr 1.15fr;
+    gap: calc(5 * var(--mm));
+  }
+  .competences__colonne {
+    display: grid;
+    gap: calc(2 * var(--mm));
+    align-content: start;
+  }
+  .competences h3 {
+    font-size: calc(3.4 * var(--mm));
+    font-weight: 700;
+    margin-block-end: calc(1 * var(--mm));
+  }
+  .competences ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(1.1 * var(--mm)) calc(3.2 * var(--mm));
+  }
+  .competences li {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(1.3 * var(--mm));
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .competences :global(.logo) {
+    block-size: calc(4 * var(--mm));
+  }
+
+  .formations {
+    display: grid;
+    gap: calc(1.7 * var(--mm));
+  }
+  .formations li {
+    display: grid;
+    grid-template-columns: calc(27 * var(--mm)) 1fr;
+    gap: calc(3 * var(--mm));
+  }
+  .formations__dates {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .formations strong {
+    display: block;
+    text-transform: uppercase;
+    font-size: calc(3.2 * var(--mm));
+  }
+  .formations__note {
+    display: block;
+    font-size: calc(3.1 * var(--mm));
+  }
+
+  .bas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(5 * var(--mm));
+  }
+  .simple {
+    display: grid;
+    gap: calc(0.9 * var(--mm));
+  }
+
+  /* Sur un écran étroit (téléphone), une feuille A4 réduite serait illisible :
+     le CV passe en une seule colonne, avec un texte de taille normale. */
+  @container (max-width: 640px) {
+    .page {
+      --mm: 4.6px;
+      min-block-size: 0;
+      padding: calc(5 * var(--mm)) calc(4.5 * var(--mm)) calc(7 * var(--mm));
+      gap: calc(5 * var(--mm));
+    }
+    .bandeau {
+      text-align: start;
+      letter-spacing: 0.06em;
+    }
+    .tete,
+    .contact {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: start;
+    }
+    .contact {
+      gap: 0;
+      font-size: calc(3.3 * var(--mm));
+    }
+    .contact > a,
+    .contact__reseaux a {
+      min-block-size: 44px;
+    }
+    .contact__reseaux {
+      flex-wrap: wrap;
+    }
+    .texte {
+      text-align: start;
+    }
+    .competences,
+    .bas {
+      grid-template-columns: 1fr;
+    }
+    .formations li {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+
+  @media print {
+    .feuille {
+      inline-size: 210mm;
+      block-size: 297mm;
+      overflow: hidden;
+    }
+  }
+</style>

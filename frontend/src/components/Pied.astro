@@ -1,0 +1,153 @@
+---
+/** Pied de page : rappel de la recherche de stage, liens utiles et colophon. */
+import Icone from './Icone.astro';
+import { ui } from '@/i18n/ui';
+import { routes, dateLongue, type Langue } from '@/i18n';
+import { profil, stage } from '@/data/profil';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const maj = new Intl.DateTimeFormat(l === 'fr' ? 'fr-FR' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+  new Date(`${profil.miseAJour}-01T00:00:00Z`),
+);
+const rappel = {
+  fr: `Stage de ${stage.semaines} semaines · ${dateLongue(stage.debut, 'fr')} → ${dateLongue(stage.fin, 'fr')}`,
+  en: `${stage.semaines}-week internship · ${dateLongue(stage.debut, 'en')} → ${dateLongue(stage.fin, 'en')}`,
+};
+---
+
+<footer class="pied">
+  <div class="conteneur pied__cadre">
+    <div class="pied__haut">
+      <p class="pied__rappel">
+        <span class="pastille" aria-hidden="true">→</span>
+        {rappel[l]}
+      </p>
+      <a class="lien" href="#contenu">
+        {ui.pied.haut[l]}
+        <Icone nom="fleche-haut" taille={16} />
+      </a>
+    </div>
+
+    <p class="pied__nom" aria-hidden="true">{profil.nomComplet}</p>
+
+    <div class="pied__bas">
+      <ul class="pied__liens" role="list">
+        <li><a href={`mailto:${profil.email}`}>{profil.email}</a></li>
+        <li>
+          <a href={profil.liens.linkedin} rel="me noopener" target="_blank">
+            LinkedIn<span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
+          </a>
+        </li>
+        <li>
+          <a href={profil.liens.github} rel="me noopener" target="_blank">
+            GitHub<span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
+          </a>
+        </li>
+        <li><a href={routes.cv(l)}>{ui.commun.cv[l]}</a></li>
+        <li><a href={routes.projet(l, 'portfolio')}>{ui.pied.coulisses[l]}</a></li>
+      </ul>
+      <p class="pied__colophon">
+        {ui.pied.colophon[l]}
+        <br />
+        {ui.pied.maj[l]}{l === 'fr' ? '\u00A0: ' : ': '}{maj}. © {profil.miseAJour.slice(0, 4)} {profil.nomComplet}.
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .pied {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) 2rem;
+    border-block-start: 1px solid var(--trait);
+    overflow: clip;
+  }
+  .pied__cadre {
+    container-type: inline-size;
+  }
+  .pied__haut {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+  .pied__rappel {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--f-etiquette);
+    font-weight: 600;
+    font-size: var(--t-s);
+  }
+  .pied__rappel .pastille {
+    inline-size: 1.6rem;
+    block-size: 1.6rem;
+  }
+  /* Le nom en très grand : une signature typographique qui change avec le thème. */
+  .pied__nom {
+    margin-block: clamp(1.5rem, 5vw, 3.5rem) clamp(1.25rem, 3vw, 2rem);
+    font-family: var(--f-titre);
+    font-size: clamp(2rem, 10vw, 11rem);
+    /* Le nom complet occupe exactement la largeur du cadre, quelle que soit la police */
+    font-size: min(11.5rem, calc(100cqi / var(--nom-rapport)));
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: 0.9;
+    white-space: nowrap;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--trait-fort);
+    user-select: none;
+  }
+  @supports not (-webkit-text-stroke: 1px black) {
+    .pied__nom {
+      color: var(--trait-fort);
+    }
+  }
+  .pied__bas {
+    display: grid;
+    gap: 1.5rem 3rem;
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--trait);
+    font-size: var(--t-s);
+  }
+  .pied__liens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+    margin: 0;
+    font-family: var(--f-etiquette);
+    font-weight: 600;
+  }
+  .pied__liens a {
+    display: inline-block;
+    padding-block: 0.35rem;
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1.5px no-repeat;
+    transition: background-size 0.4s var(--sortie);
+  }
+  .pied__liens a:hover {
+    background-size: 100% 1.5px;
+  }
+  .pied__colophon {
+    color: var(--encre-2);
+    max-inline-size: 46rem;
+  }
+  @media (min-width: 60em) {
+    .pied__bas {
+      grid-template-columns: 1fr auto;
+      align-items: start;
+    }
+    .pied__colophon {
+      text-align: end;
+    }
+  }
+  @media print {
+    .pied {
+      display: none;
+    }
+  }
+</style>

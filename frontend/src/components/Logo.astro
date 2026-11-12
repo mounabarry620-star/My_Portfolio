@@ -1,0 +1,78 @@
+---
+/**
+ * Logo d'une technologie. Trois sources, toutes libres et utilisées par les designers :
+ *  - « devicon » (par défaut) : https://devicon.dev, licence MIT — la même que dans mon CV ;
+ *  - « si:nom » : Simple Icons, https://simpleicons.org, licence CC0 (dessin + couleur officielle) ;
+ *  - « lu:nom » : Lucide, https://lucide.dev, licence ISC — icône générique, pour les outils
+ *    qui n'ont pas de logo libre (Postfix, WinDesign…).
+ * Décoratif : le nom de la technologie est toujours écrit à côté.
+ */
+import * as simpleIcons from 'simple-icons';
+
+const devicon = import.meta.glob<string>(
+  '/node_modules/devicon/icons/{cplusplus,javascript,typescript,python,java,c,bash,html5,css3,vuejs,react,nextjs,astro,threejs,sass,tailwindcss,zustand,webgl,postgresql,linux,debian,ubuntu,windows11,qt,git,vitest,vitejs,webpack,chartjs,json,xml,handlebars,unifiedmodelinglanguage,trello}/*-{original,plain}.svg',
+  { query: '?url', import: 'default', eager: true },
+);
+const lucide = import.meta.glob<string>('/node_modules/lucide-static/icons/{database,workflow,mail,webhook,layers}.svg', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+interface Props {
+  nom: string;
+  taille?: number;
+}
+const { nom, taille = 18 } = Astro.props;
+
+let adresse: string | undefined;
+let si: { path: string; hex: string } | undefined;
+let trait: string | undefined;
+if (nom.startsWith('si:')) {
+  const cle = `si${nom.slice(3, 4).toUpperCase()}${nom.slice(4)}` as keyof typeof simpleIcons;
+  si = simpleIcons[cle] as { path: string; hex: string } | undefined;
+} else if (nom.startsWith('lu:')) {
+  const brut = lucide[`/node_modules/lucide-static/icons/${nom.slice(3)}.svg`];
+  trait = brut?.replace(/<!--[\s\S]*?-->/g, '').replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+} else {
+  adresse = devicon[`/node_modules/devicon/icons/${nom}/${nom}-original.svg`] ?? devicon[`/node_modules/devicon/icons/${nom}/${nom}-plain.svg`];
+}
+---
+
+{adresse && <img class="logo" src={adresse} alt="" width={taille} height={taille} loading="lazy" decoding="async" />}
+{
+  si && (
+    <svg class="logo" viewBox="0 0 24 24" width={taille} height={taille} aria-hidden="true" focusable="false">
+      <path d={si.path} fill={`#${si.hex}`} />
+    </svg>
+  )
+}
+{
+  trait && (
+    <svg
+      class="logo"
+      viewBox="0 0 24 24"
+      width={taille}
+      height={taille}
+      fill="none"
+      stroke="#2b3a67"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      set:html={trait}
+    />
+  )
+}
+
+<style>
+  .logo {
+    flex: none;
+    display: inline-block;
+    inline-size: auto;
+    block-size: 1.15em;
+    aspect-ratio: 1;
+    object-fit: contain;
+  }
+</style>

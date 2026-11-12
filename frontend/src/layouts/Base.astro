@@ -1,0 +1,164 @@
+---
+/**
+ * Gabarit commun à toutes les pages : <head> (référencement, polices, préférences),
+ * en-tête, contenu, pied de page et palette de commandes.
+ */
+import '@/styles/global.css';
+import { Font, fontData } from 'astro:assets';
+import Entete from '@/components/Entete.astro';
+import Pied from '@/components/Pied.astro';
+import Palette from '@/components/Palette.astro';
+import { ui } from '@/i18n/ui';
+import { codesHtml, codesOg, langues, url, type Langue } from '@/i18n';
+import { profil } from '@/data/profil';
+
+interface Props {
+  langue: Langue;
+  titre?: string;
+  description?: string;
+  /** Adresse de cette page dans chaque langue (pour le sélecteur de langue et hreflang). */
+  versions: Record<Langue, string>;
+  /** Image de partage (chemin dans `public/`). */
+  image?: string;
+  surAccueil?: boolean;
+  /** Page sans en-tête ni pied (ex. le CV à imprimer). */
+  nu?: boolean;
+}
+
+const {
+  langue: l,
+  titre = ui.meta.titre[l],
+  description = ui.meta.description[l],
+  versions,
+  image = l === 'fr' ? '/og/partage-fr.jpg' : '/og/partage-en.jpg',
+  surAccueil = false,
+  nu = false,
+} = Astro.props;
+
+const autre: Langue = l === 'fr' ? 'en' : 'fr';
+const autreLangue = { langue: autre, href: versions[autre] };
+const absolu = (chemin: string) => new URL(chemin, Astro.site).href;
+const canonique = absolu(versions[l]);
+
+// Fichier principal (alphabet latin) de chaque police, pour précharger celles du thème actif.
+const variables = [
+  '--police-fraunces',
+  '--police-instrument',
+  '--police-bricolage',
+  '--police-syne',
+  '--police-dmsans',
+  '--police-jetbrains',
+  '--police-raleway',
+  '--police-yanone',
+] as const;
+const fichier = (v: (typeof variables)[number]) =>
+  fontData[v]?.find((f) => f.subset === 'latin' && f.style === 'normal')?.src[0]?.url ?? '';
+const policesParTheme = {
+  arles: [fichier('--police-fraunces'), fichier('--police-instrument')],
+  marseille: [fichier('--police-bricolage')],
+  conakry: [fichier('--police-syne'), fichier('--police-dmsans')],
+  machine: [fichier('--police-jetbrains')],
+};
+
+// Chargement anticipé des pages au survol (API « Speculation Rules », navigateurs récents).
+const regles = JSON.stringify({
+  prerender: [
+    {
+      where: {
+        and: [
+          { href_matches: '/*' },
+          { not: { href_matches: '/*.pdf' } },
+          { not: { selector_matches: '[download], [target=_blank], [data-lien-langue]' } },
+        ],
+      },
+      eagerness: 'moderate',
+    },
+  ],
+});
+---
+
+<!doctype html>
+<html lang={codesHtml[l]} data-theme="arles" data-lecture="simple" data-courriel={profil.email}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!-- Préférences appliquées avant le premier affichage (pas de clignotement). -->
+    <script is:inline define:vars={{ policesParTheme }}>
+      (function () {
+        var d = document.documentElement;
+        var q = new URLSearchParams(location.search);
+        var T = ['arles', 'marseille', 'conakry', 'machine'];
+        var t = q.get('theme');
+        var n = q.get('lecture');
+        try {
+          if (T.indexOf(t) < 0) t = localStorage.getItem('theme');
+          if (n !== 'simple' && n !== 'technique') n = localStorage.getItem('lecture');
+        } catch (e) {}
+        if (T.indexOf(t) < 0) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'conakry' : 'arles';
+        d.dataset.theme = t;
+        d.dataset.lecture = n === 'technique' ? 'technique' : 'simple';
+        d.classList.add('js');
+        (policesParTheme[t] || []).forEach(function (u) {
+          if (!u) return;
+          var lien = document.createElement('link');
+          lien.rel = 'preload';
+          lien.as = 'font';
+          lien.type = 'font/woff2';
+          lien.crossOrigin = 'anonymous';
+          lien.href = u;
+          document.head.appendChild(lien);
+        });
+      })();
+    </script>
+
+    <title>{titre}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={profil.nomComplet} />
+    <link rel="canonical" href={canonique} />
+    {langues.map((code) => <link rel="alternate" hreflang={code} href={absolu(versions[code])} />)}
+    <link rel="alternate" hreflang="x-default" href={absolu(versions.fr)} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={profil.nomComplet} />
+    <meta property="og:title" content={titre} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonique} />
+    <meta property="og:locale" content={codesOg[l]} />
+    <meta property="og:locale:alternate" content={codesOg[autre]} />
+    <meta property="og:image" content={absolu(url(image))} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <meta name="theme-color" content="#f8f0e1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <link rel="icon" href={url('/favicon-32.png')} sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href={url('/apple-touch-icon.png')} />
+    <link rel="manifest" href={url('/manifest.webmanifest')} />
+
+    {variables.map((v) => <Font cssVariable={v} />)}
+
+    <script is:inline type="speculationrules" set:html={regles} />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="evitement" href="#contenu">{ui.commun.allerAuContenu[l]}</a>
+    {!nu && <Entete langue={l} autreLangue={autreLangue} surAccueil={surAccueil} />}
+    <main id="contenu" tabindex="-1">
+      <slot />
+    </main>
+    {!nu && <Pied langue={l} />}
+    <Palette langue={l} autreLangue={autreLangue} surAccueil={surAccueil} />
+    <script>
+      import '@/scripts/app.ts';
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  main:focus {
+    outline: none;
+  }
+</style>

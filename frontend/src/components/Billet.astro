@@ -1,0 +1,449 @@
+---
+/**
+ * Le « billet de stage » : l'encadré qui dit, au premier coup d'œil, ce que je cherche.
+ * Présenté comme un titre de transport : de l'IUT vers l'équipe d'accueil, avec les dates.
+ * Le QR code (généré à la construction du site) ouvre le CV en ligne.
+ */
+import { Picture } from 'astro:assets';
+import QRCode from 'qrcode';
+import portrait from '@/assets/portrait-detoure.png';
+import { ui } from '@/i18n/ui';
+import { dateBillet, routes, type Langue } from '@/i18n';
+import { stage } from '@/data/profil';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+
+// QR code → tracé SVG (un petit carré par module sombre).
+const cible = new URL(routes.cv(l), Astro.site).href;
+const qr = QRCode.create(cible, { errorCorrectionLevel: 'M' });
+const taille = qr.modules.size;
+let trace = '';
+for (let y = 0; y < taille; y++) {
+  for (let x = 0; x < taille; x++) {
+    if (qr.modules.get(y, x)) trace += `M${x} ${y}h1v1h-1z`;
+  }
+}
+const annee = (iso: string) => iso.slice(0, 4);
+---
+
+<article class="billet" aria-label={ui.billet.aria[l]} data-billet>
+  <div class="billet__carte" data-billet-carte>
+    <!-- Portrait détouré, centré sur le visage, posé devant une arche de couleur -->
+    <div class="billet__scene">
+      <div class="billet__fond" aria-hidden="true">
+        <span class="billet__arche"></span>
+        <span class="billet__grain"></span>
+      </div>
+      <Picture
+        class="billet__portrait"
+        src={portrait}
+        alt={ui.hero.portraitAlt[l]}
+        formats={['avif']}
+        fallbackFormat="webp"
+        widths={[360, 540, 720, 1080]}
+        sizes="(min-width: 30em) 24rem, calc(100vw - 4rem)"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        quality={74}
+      />
+      <svg class="billet__badge" viewBox="0 0 120 120" aria-hidden="true">
+        <defs>
+          <path id={`cercle-${l}`} d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0"></path>
+        </defs>
+        <circle cx="60" cy="60" r="58"></circle>
+        <g class="billet__badge-texte">
+          <text><textPath href={`#cercle-${l}`} textLength="276">{ui.billet.badge[l]}</textPath></text>
+        </g>
+        <path class="billet__badge-fleche" d="M50 70 70 50M54 50h16v16"></path>
+      </svg>
+    </div>
+
+    <header class="billet__tete">
+      <span class="etiquette">{ui.billet.titre[l]}</span>
+      <span class="billet__ref">{ui.billet.ref[l]} {stage.reference}</span>
+    </header>
+
+    <div class="billet__perforation" aria-hidden="true"></div>
+
+    <div class="billet__corps">
+      <div class="billet__trajet">
+        <p>
+          <span class="etiquette">{ui.billet.de[l]}</span>
+          <strong>{ui.billet.origine[l]}</strong>
+          <small>{ui.billet.origineNote[l]}</small>
+        </p>
+        <svg class="billet__voie" viewBox="0 0 64 16" aria-hidden="true">
+          <circle cx="5" cy="8" r="3.5"></circle>
+          <path d="M11 8h36" stroke-dasharray="1 5"></path>
+          <path d="m49 3 6 5-6 5"></path>
+        </svg>
+        <p>
+          <span class="etiquette">{ui.billet.vers[l]}</span>
+          <strong>{ui.billet.destination[l]}</strong>
+          <small>{ui.billet.destinationNote[l]}</small>
+        </p>
+      </div>
+
+      <dl class="billet__infos">
+        <div>
+          <dt class="etiquette">{ui.billet.depart[l]}</dt>
+          <dd>
+            <time datetime={stage.debut}>{dateBillet(stage.debut, l)} <small>{annee(stage.debut)}</small></time>
+          </dd>
+        </div>
+        <div>
+          <dt class="etiquette">{ui.billet.arrivee[l]}</dt>
+          <dd>
+            <time datetime={stage.fin}>{dateBillet(stage.fin, l)} <small>{annee(stage.fin)}</small></time>
+          </dd>
+        </div>
+        <div>
+          <dt class="etiquette">{ui.billet.duree[l]}</dt>
+          <dd>{ui.billet.semaines[l]}</dd>
+        </div>
+        <div class="billet__large">
+          <dt class="etiquette">{ui.billet.poste[l]}</dt>
+          <dd>{ui.billet.posteValeur[l]}</dd>
+        </div>
+        <div>
+          <dt class="etiquette">{ui.billet.rythme[l]}</dt>
+          <dd>{ui.billet.rythmeValeur[l]}</dd>
+        </div>
+      </dl>
+
+      <footer class="billet__pied">
+        <a class="billet__qr" href={routes.cv(l)} aria-label={ui.billet.qr[l]} title={ui.billet.qr[l]}>
+          <svg viewBox={`-2 -2 ${taille + 4} ${taille + 4}`} shape-rendering="crispEdges" aria-hidden="true">
+            <path d={trace}></path>
+          </svg>
+        </a>
+        <p class="billet__option">
+          <span class="etiquette">{ui.billet.option[l]}</span>
+          {ui.billet.optionValeur[l]}
+          <span class="etiquette billet__mobilite">{ui.billet.mobilite[l]}</span>
+          {ui.billet.mobiliteValeur[l]}
+        </p>
+      </footer>
+    </div>
+    <div class="billet__reflet" aria-hidden="true"></div>
+  </div>
+</article>
+
+<style>
+  .billet {
+    --inclinaison-x: 0deg;
+    --inclinaison-y: 0deg;
+    --reflet-x: 50%;
+    --reflet-y: 0%;
+    inline-size: min(100%, 26rem);
+    perspective: 70rem;
+    container-type: inline-size;
+  }
+  .billet__carte {
+    position: relative;
+    display: grid;
+    border-radius: var(--rayon);
+    background: var(--surface);
+    color: var(--encre);
+    box-shadow: var(--ombre);
+    transform: rotateX(var(--inclinaison-x)) rotateY(var(--inclinaison-y));
+    transform-style: preserve-3d;
+    will-change: transform;
+    isolation: isolate;
+  }
+  /* Filet extérieur */
+  .billet__carte::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--trait);
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  /* ---- Scène du portrait ---- */
+  .billet__scene {
+    position: relative;
+    block-size: clamp(13rem, 36svh, 19rem);
+  }
+  .billet__fond {
+    position: absolute;
+    inset: 0;
+    overflow: clip;
+    border-radius: var(--rayon) var(--rayon) 0 0;
+    background: var(--accent);
+  }
+  /* Grande arche derrière le buste */
+  .billet__arche {
+    position: absolute;
+    inset: 18% 14% -10%;
+    border-radius: 999px 999px 0 0;
+    background: var(--accent-2);
+    transition: transform 0.9s var(--sortie);
+  }
+  /* Grain papier : bruit SVG (feTurbulence), comme une texture d'impression */
+  .billet__grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.32;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  }
+  /* Le portrait : posé en bas, centré, entièrement dans le cadre coloré */
+  .billet__scene :global(picture) {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    overflow: clip;
+    border-radius: var(--rayon) var(--rayon) 0 0;
+    pointer-events: none;
+  }
+  .billet__scene :global(img) {
+    block-size: 100%;
+    inline-size: 100%;
+    object-fit: contain;
+    object-position: 50% 100%;
+    filter: drop-shadow(0 18px 22px oklch(10% 0.02 60 / 0.28));
+    transform-origin: 50% 100%;
+    transition: transform 0.9s var(--sortie);
+  }
+  @media (hover: hover) {
+    .billet:hover .billet__scene :global(img) {
+      transform: translateY(-0.35rem) scale(1.025);
+    }
+    .billet:hover .billet__arche {
+      transform: scale(1.04);
+    }
+  }
+
+  /* Badge rond qui tourne lentement, comme un tampon */
+  .billet__badge {
+    position: absolute;
+    inset: 0.75rem 0.75rem auto auto;
+    z-index: 5;
+    inline-size: clamp(5.25rem, 23cqi, 6.25rem);
+    filter: drop-shadow(0 8px 14px oklch(10% 0.02 60 / 0.25));
+    block-size: auto;
+    overflow: visible;
+  }
+  .billet__badge circle {
+    fill: var(--encre);
+  }
+  .billet__badge text {
+    fill: var(--fond);
+    font-family: var(--f-etiquette);
+    font-size: 10.5px;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .billet__badge-texte {
+    transform-origin: 60px 60px;
+    animation: tourne 18s linear infinite;
+  }
+  .billet__badge-fleche {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  @keyframes tourne {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .billet__tete {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 1.1rem;
+    background: var(--encre);
+    color: var(--fond);
+  }
+  .billet__ref {
+    font-family: var(--f-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  /* Ligne de perforation avec deux encoches rondes sur les côtés */
+  .billet__perforation {
+    position: relative;
+    block-size: 0;
+    border-block-start: 2px dashed var(--trait-fort);
+    margin-inline: 1.1rem;
+    z-index: 4;
+  }
+  .billet__perforation::before,
+  .billet__perforation::after {
+    content: '';
+    position: absolute;
+    inset-block-start: -0.7rem;
+    inline-size: 1.3rem;
+    block-size: 1.3rem;
+    border-radius: 50%;
+    background: var(--fond);
+    box-shadow: inset 0 0 0 1px var(--trait);
+  }
+  .billet__perforation::before {
+    inset-inline-start: -1.75rem;
+    clip-path: inset(0 0 0 50%);
+  }
+  .billet__perforation::after {
+    inset-inline-end: -1.75rem;
+    clip-path: inset(0 50% 0 0);
+  }
+
+  .billet__corps {
+    display: grid;
+    gap: 0.95rem;
+    padding: 1.05rem 1.1rem 1.1rem;
+  }
+  .billet .etiquette {
+    display: block;
+    font-size: 0.625rem;
+    color: var(--encre-2);
+  }
+  .billet__tete .etiquette {
+    font-size: 0.6875rem;
+    color: inherit;
+  }
+
+  .billet__trajet {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .billet__trajet p:last-child {
+    text-align: end;
+  }
+  .billet__trajet strong {
+    display: block;
+    font-family: var(--f-titre);
+    font-size: clamp(1.15rem, 5.4cqi, 1.45rem);
+    font-weight: var(--sous-titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: calc(var(--titre-interlettre) * 0.7);
+    line-height: 1.1;
+  }
+  .billet__trajet small {
+    display: block;
+    margin-block-start: 0.15rem;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    color: var(--encre-2);
+  }
+  .billet__voie {
+    inline-size: 3.4rem;
+    fill: none;
+    stroke: var(--accent-encre);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .billet__voie circle {
+    fill: var(--accent);
+  }
+  .billet__voie path:first-of-type {
+    animation: voie 1.6s linear infinite;
+  }
+  @keyframes voie {
+    to {
+      stroke-dashoffset: -12;
+    }
+  }
+
+  .billet__infos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem 0.6rem;
+    margin: 0;
+    padding-block: 0.85rem;
+    border-block: 1px solid var(--trait);
+  }
+  .billet__infos dd {
+    margin: 0.1rem 0 0;
+    font-family: var(--f-etiquette);
+    font-size: clamp(0.92rem, 4.2cqi, 1.0625rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .billet__infos small {
+    font-size: 0.72em;
+    font-weight: 550;
+    color: var(--encre-2);
+  }
+  .billet__large {
+    grid-column: span 2;
+  }
+
+  .billet__pied {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.9rem;
+  }
+  /* Le QR code reste toujours sombre sur clair : c'est ce que les lecteurs savent lire. */
+  .billet__qr {
+    display: block;
+    inline-size: 4.6rem;
+    padding: 0.25rem;
+    border-radius: var(--rayon-s);
+    background: #fff;
+    transition: transform 0.5s var(--ressort);
+  }
+  .billet__qr:hover {
+    transform: scale(1.06) rotate(-2deg);
+  }
+  .billet__qr svg {
+    inline-size: 100%;
+    fill: #14110f;
+  }
+  .billet__option {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+  .billet__mobilite {
+    margin-block-start: 0.45rem;
+  }
+
+  /* Reflet qui suit le pointeur */
+  .billet__reflet {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle at var(--reflet-x) var(--reflet-y),
+      color-mix(in oklch, white 34%, transparent),
+      transparent 42%
+    );
+    mix-blend-mode: soft-light;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .billet[data-actif] .billet__reflet {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .billet__voie path:first-of-type,
+    .billet__badge-texte {
+      animation: none;
+    }
+  }
+</style>

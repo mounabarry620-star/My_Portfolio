@@ -1,0 +1,60 @@
+/**
+ * Logo de chaque technologie citée sur le site (voir les sources dans Logo.astro).
+ * « si: » = Simple Icons, « lu: » = icône générique Lucide, sinon Devicon.
+ * On cherche le nom de la techno (sans le numéro de version) dans cette liste.
+ */
+const correspondances: [RegExp, string[]][] = [
+  [/^c\+\+/i, ['cplusplus']],
+  [/^c$/i, ['c']],
+  [/^javascript/i, ['javascript']],
+  [/^typescript/i, ['typescript']],
+  [/^python/i, ['python']],
+  [/^java$/i, ['java']],
+  [/^bash/i, ['bash']],
+  [/^html · css/i, ['html5', 'css3']],
+  [/^html/i, ['html5']],
+  [/^css natif|^css$/i, ['css3']],
+  [/^vue/i, ['vuejs']],
+  [/^react three fiber/i, ['threejs']],
+  [/^react · next/i, ['react', 'nextjs']],
+  [/^react/i, ['react']],
+  [/^next/i, ['nextjs']],
+  [/^astro/i, ['astro']],
+  [/^three/i, ['threejs']],
+  [/^sass/i, ['sass']],
+  [/^tailwind/i, ['tailwindcss']],
+  [/^zustand/i, ['zustand']],
+  [/^webgl/i, ['webgl']],
+  [/^leaflet · chart/i, ['si:leaflet', 'chartjs']],
+  [/^chart/i, ['chartjs']],
+  [/^handlebars/i, ['handlebars']],
+  [/^postgre|^pl\/pgsql/i, ['postgresql']],
+  [/^sql$/i, ['lu:database']],
+  [/^windesign/i, ['lu:workflow']],
+  [/^postfix/i, ['lu:mail']],
+  [/^api rest/i, ['lu:webhook']],
+  [/^view transitions/i, ['lu:layers']],
+  [/^virtualbox/i, ['si:virtualbox']],
+  [/^leaflet$/i, ['si:leaflet']],
+  [/^sage/i, ['si:sage']],
+  [/^json · xml/i, ['json', 'xml']],
+  [/^json/i, ['json']],
+  [/^xml/i, ['xml']],
+  [/^linux \(/i, ['linux', 'debian', 'ubuntu']],
+  [/^linux/i, ['linux']],
+  [/^debian/i, ['debian']],
+  [/^ubuntu/i, ['ubuntu']],
+  [/^windows/i, ['windows11']],
+  [/^qt/i, ['qt']],
+  [/^git$/i, ['git']],
+  [/^vitest/i, ['vitest']],
+  [/^vite · webpack/i, ['vitejs', 'webpack']],
+  [/^vite$/i, ['vitejs']],
+  [/^webpack/i, ['webpack']],
+  [/^uml/i, ['unifiedmodelinglanguage']],
+  [/^scrum/i, ['trello']],
+];
+
+export function logosDe(nom: string): string[] {
+  return correspondances.find(([motif]) => motif.test(nom.trim()))?.[1] ?? [];
+}

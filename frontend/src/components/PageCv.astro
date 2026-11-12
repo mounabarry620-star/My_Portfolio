@@ -1,0 +1,120 @@
+---
+/**
+ * Page « CV » : la feuille A4 à l'écran, avec les boutons pour la télécharger en PDF
+ * ou l'imprimer. À l'impression, seule la feuille sort (voir les règles @media print).
+ */
+import Base from '@/layouts/Base.astro';
+import FeuilleCv from './FeuilleCv.astro';
+import Icone from './Icone.astro';
+import { ui } from '@/i18n/ui';
+import { routes, url, type Langue } from '@/i18n';
+import { profil } from '@/data/profil';
+import { cv } from '@/data/cv';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const versions = { fr: routes.cv('fr'), en: routes.cv('en') };
+const autre: Langue = l === 'fr' ? 'en' : 'fr';
+const pdf = url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mamadou_Bailo_Barry_EN.pdf');
+const description = `${cv.titre[l]} — ${cv.recherche.objet[l]}, ${cv.recherche.dates[l]}.`;
+---
+
+<Base langue={l} versions={versions} titre={`${ui.cv.titrePage[l]} · ${cv.titre[l]}`} description={description}>
+  <section class="cv" aria-labelledby="titre-cv">
+    <div class="conteneur cv__barre">
+      <div>
+        <a class="lien cv__retour" href={routes.accueil(l)}>
+          <Icone nom="fleche-gauche" taille={16} />
+          {ui.cv.retour[l]}
+        </a>
+        <h1 class="titre-2" id="titre-cv">{ui.commun.cv[l]}</h1>
+      </div>
+      <div class="cv__actions">
+        <a class="bouton" href={pdf} download>
+          <Icone nom="telecharger" />
+          {ui.cv.telecharger[l]}
+        </a>
+        <button type="button" class="bouton bouton--contour" data-imprimer>
+          <Icone nom="imprimer" />
+          {ui.cv.imprimer[l]}
+        </button>
+        <a class="bouton bouton--contour" href={routes.cv(autre)} hreflang={autre} lang={autre}>
+          <Icone nom="langue" />
+          {ui.cv.autreLangue[l]}
+        </a>
+      </div>
+    </div>
+
+    <div class="cv__bureau">
+      <div class="cv__ombre">
+        <FeuilleCv langue={l} />
+      </div>
+    </div>
+    <p class="cache-visuel">{profil.nomComplet}</p>
+  </section>
+</Base>
+
+<script>
+  document.querySelector('[data-imprimer]')?.addEventListener('click', () => window.print());
+</script>
+
+<style>
+  .cv__barre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.25rem 2rem;
+    padding-block: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 3vw, 2rem);
+  }
+  .cv__retour {
+    margin-block-end: 0.75rem;
+    color: var(--encre-2);
+  }
+  .cv__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .cv__bureau {
+    padding: clamp(0.75rem, 3vw, 3rem) clamp(0.5rem, 3vw, 3rem) clamp(3rem, 8vw, 6rem);
+    background: var(--fond-2);
+    border-block-start: 1px solid var(--trait);
+  }
+  .cv__ombre {
+    inline-size: min(100%, 210mm);
+    margin-inline: auto;
+    box-shadow: var(--ombre);
+    border-radius: 2px;
+    overflow: clip;
+  }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    .cv__barre {
+      display: none;
+    }
+    .cv__bureau {
+      padding: 0;
+      background: none;
+      border: 0;
+    }
+    .cv__ombre {
+      inline-size: 210mm;
+      box-shadow: none;
+      border-radius: 0;
+    }
+    :global(html),
+    :global(body) {
+      background: #fff !important;
+    }
+    :global(.evitement) {
+      display: none;
+    }
+  }
+</style>

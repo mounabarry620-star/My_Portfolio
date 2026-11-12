@@ -1,0 +1,230 @@
+---
+/**
+ * Section 05 — Profits : ce que l'équipe d'accueil y gagne, chaque point appuyé sur un fait.
+ * Puis le profil : langues et centres d'intérêt.
+ */
+import TitreSection from '../TitreSection.astro';
+import Icone from '../Icone.astro';
+import { ui } from '@/i18n/ui';
+import type { Langue } from '@/i18n';
+import { atouts, centresInteret, languesParlees } from '@/data/profil';
+import { lienRealisation } from '@/data/liens';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const lettres = ['A', 'B', 'C', 'D'];
+---
+
+<section class="section" id="atouts" data-section="atouts" aria-labelledby="titre-atouts">
+  <div class="conteneur">
+    <TitreSection numero={5} id="atouts" etiquette={ui.atouts.etiquette[l]} titre={ui.atouts.titre[l]} intro={ui.atouts.intro[l]} />
+
+    <ol class="atouts" role="list">
+      {
+        atouts.map((a, i) => (
+          <li class="atout" data-revele>
+            <span class="atout__lettre" aria-hidden="true">
+              {lettres[i]}
+            </span>
+            <div class="atout__corps">
+              <h3 class="atout__titre">{a.titre[l]}</h3>
+              <p class="atout__texte">{a.texte[l]}</p>
+            </div>
+            <p class="atout__preuve">
+              <Icone nom="preuve" taille={18} />
+              <span>
+                <strong class="etiquette">{ui.commun.preuve[l]}</strong>
+                {a.lien ? <a href={lienRealisation(l, a.lien)}>{a.preuve[l]}</a> : a.preuve[l]}
+              </span>
+            </p>
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="profil">
+      <div class="profil__bloc" data-revele>
+        <h3 class="etiquette">{ui.atouts.langues[l]}</h3>
+        <ul class="langues" role="list">
+          {
+            languesParlees.map((lg) => (
+              <li>
+                <span class="langues__nom">{lg.nom[l]}</span>
+                <span class="langues__jauge" aria-hidden="true">
+                  {[1, 2, 3, 4].map((n) => (
+                    <i class:list={{ plein: n <= lg.jauge }} />
+                  ))}
+                </span>
+                <span class="langues__niveau">{lg.niveau[l]}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div class="profil__bloc" data-revele style="--delai: .08s">
+        <h3 class="etiquette">{ui.atouts.interets[l]}</h3>
+        <ul class="interets" role="list">
+          {
+            centresInteret.map((c) => (
+              <li>
+                <strong>{c.titre[l]}</strong>
+                <span>{c.texte[l]}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .atouts {
+    margin: 0;
+    border-block-start: 2px solid var(--encre);
+  }
+  .atout {
+    display: grid;
+    gap: 0.75rem 2rem;
+    padding-block: clamp(1.5rem, 3.5vw, 2.5rem);
+    border-block-end: 1px solid var(--trait);
+  }
+  .atout__lettre {
+    font-family: var(--f-titre);
+    font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    line-height: 0.85;
+    color: var(--accent-encre);
+  }
+  .atout__titre {
+    font-size: var(--t-2xl);
+    font-weight: var(--titre-graisse);
+    font-variation-settings: var(--titre-variation);
+    letter-spacing: var(--titre-interlettre);
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+  .atout__texte {
+    margin-block-start: 0.75rem;
+    font-size: var(--t-l);
+    line-height: 1.5;
+    color: var(--encre-2);
+    max-inline-size: 40rem;
+  }
+  .atout__preuve {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    align-self: start;
+    padding: 0.85rem 1rem;
+    border-radius: var(--rayon-m);
+    background: var(--fond-2);
+    font-size: var(--t-s);
+    line-height: 1.45;
+  }
+  .atout__preuve :global(svg) {
+    flex: none;
+    margin-block-start: 0.1rem;
+    color: var(--accent-encre);
+  }
+  .atout__preuve .etiquette {
+    display: block;
+    font-size: 0.625rem;
+    color: var(--encre-2);
+    margin-block-end: 0.15rem;
+  }
+  .atout__preuve a {
+    font-weight: 600;
+    text-decoration-color: color-mix(in oklch, currentColor 40%, transparent);
+  }
+  .atout__preuve a:hover {
+    text-decoration-color: currentColor;
+  }
+  @media (min-width: 62em) {
+    .atout {
+      grid-template-columns: 5.5rem minmax(0, 1.6fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  /* ---- Profil : langues et centres d'intérêt ---- */
+  .profil {
+    display: grid;
+    gap: 2.5rem clamp(2rem, 6vw, 5rem);
+    margin-block-start: clamp(3.5rem, 8vw, 6rem);
+  }
+  .profil__bloc > .etiquette {
+    padding-block-end: 0.8rem;
+    margin-block-end: 0.4rem;
+    border-block-end: 2px solid var(--encre);
+    color: var(--encre-2);
+  }
+  .langues,
+  .interets {
+    margin: 0;
+  }
+  .langues li {
+    display: grid;
+    grid-template-columns: 6.5rem auto 1fr;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 0.8rem;
+    border-block-end: 1px solid var(--trait);
+  }
+  .langues__nom {
+    font-family: var(--f-titre);
+    font-size: var(--t-l);
+    font-weight: var(--sous-titre-graisse);
+    font-variation-settings: var(--titre-variation);
+  }
+  .langues__jauge {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .langues__jauge i {
+    inline-size: 0.7rem;
+    block-size: 0.7rem;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent-encre);
+  }
+  .langues__jauge i.plein {
+    background: var(--accent-encre);
+  }
+  .langues__niveau {
+    font-size: var(--t-s);
+    color: var(--encre-2);
+  }
+  .interets li {
+    display: grid;
+    gap: 0.15rem;
+    padding-block: 0.8rem;
+    border-block-end: 1px solid var(--trait);
+  }
+  .interets strong {
+    font-family: var(--f-titre);
+    font-size: var(--t-l);
+    font-weight: var(--sous-titre-graisse);
+    font-variation-settings: var(--titre-variation);
+  }
+  .interets span {
+    font-size: var(--t-s);
+    color: var(--encre-2);
+    max-inline-size: 34rem;
+  }
+  @media (min-width: 54em) {
+    .profil {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 26em) {
+    .langues li {
+      grid-template-columns: 1fr auto;
+    }
+    .langues__niveau {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

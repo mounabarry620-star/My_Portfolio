@@ -1,0 +1,224 @@
+---
+/**
+ * Palette de commandes (Ctrl+K ou ⌘K) : chercher une page, un projet ou un réglage
+ * au clavier. Fenêtre modale native (<dialog>) : le navigateur gère le piège à focus
+ * et la touche Échap.
+ */
+import Icone from './Icone.astro';
+import { ui } from '@/i18n/ui';
+import { routes, sections, type Langue } from '@/i18n';
+import { projets } from '@/data/projets';
+import { url } from '@/i18n';
+
+interface Props {
+  langue: Langue;
+  autreLangue: { langue: Langue; href: string };
+  surAccueil?: boolean;
+}
+const { langue: l, autreLangue, surAccueil = false } = Astro.props;
+
+type Commande = { groupe: string; libelle: string; note?: string; href?: string; action?: string; valeur?: string };
+const themes = ['arles', 'marseille', 'conakry', 'machine'] as const;
+
+const commandes: Commande[] = [
+  ...sections.map((id) => ({
+    groupe: ui.palette.aller[l],
+    libelle: ui.nav[id][l],
+    href: surAccueil ? `#${id}` : routes.section(l, id),
+  })),
+  { groupe: ui.palette.aller[l], libelle: ui.contact.cvPage[l], href: routes.cv(l) },
+  ...projets
+    .filter((p) => p.vedette)
+    .map((p) => ({
+      groupe: ui.palette.projets[l],
+      libelle: p.titre[l],
+      note: p.genre[l],
+      href: routes.projet(l, p.slug),
+    })),
+  ...themes.map((t) => ({
+    groupe: ui.palette.reglages[l],
+    libelle: `${ui.palette.theme[l]} ${ui.themes[t].nom[l]}`,
+    note: ui.themes[t].note[l],
+    action: 'theme',
+    valeur: t,
+  })),
+  { groupe: ui.palette.reglages[l], libelle: ui.palette.lectureSimple[l], action: 'lecture', valeur: 'simple' },
+  { groupe: ui.palette.reglages[l], libelle: ui.palette.lectureTechnique[l], action: 'lecture', valeur: 'technique' },
+  { groupe: ui.palette.reglages[l], libelle: ui.palette.passerEn[l], href: autreLangue.href, action: 'langue' },
+  { groupe: ui.palette.actions[l], libelle: ui.palette.copierMail[l], action: 'copier' },
+  {
+    groupe: ui.palette.actions[l],
+    libelle: ui.palette.telechargerCv[l],
+    href: url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mamadou_Bailo_Barry_EN.pdf'),
+    action: 'telecharger',
+  },
+];
+---
+
+<dialog class="palette" data-palette aria-label={ui.reglages.commandes[l]}>
+  <div class="palette__champ">
+    <Icone nom="recherche" taille={20} />
+    <input
+      type="text"
+      data-palette-champ
+      placeholder={ui.palette.placeholder[l]}
+      aria-label={ui.palette.placeholder[l]}
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls="palette-liste"
+      aria-autocomplete="list"
+    />
+    <kbd>Esc</kbd>
+  </div>
+  <ul id="palette-liste" class="palette__liste" role="listbox" data-palette-liste>
+    {
+      commandes.map((c, i) => (
+        <li
+          id={`cmd-${i}`}
+          role="option"
+          aria-selected="false"
+          data-groupe={c.groupe}
+          data-href={c.href}
+          data-action={c.action}
+          data-valeur={c.valeur}
+          data-texte={`${c.libelle} ${c.note ?? ''} ${c.groupe}`}
+        >
+          <span class="palette__groupe">{c.groupe}</span>
+          <span class="palette__libelle">{c.libelle}</span>
+          {c.note && <span class="palette__note">{c.note}</span>}
+        </li>
+      ))
+    }
+  </ul>
+  <p class="palette__vide" data-palette-vide hidden>{ui.palette.vide[l]}</p>
+  <p class="palette__aide">{ui.palette.aide[l]}</p>
+</dialog>
+
+<style>
+  .palette {
+    position: fixed;
+    inset: min(14vh, 7rem) 0 auto;
+    margin-inline: auto;
+    inline-size: min(38rem, 100vw - 1.5rem);
+    max-block-size: min(32rem, 100dvh - 9rem);
+    display: none;
+    grid-template-rows: auto 1fr auto;
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon);
+    background: var(--surface);
+    box-shadow: var(--ombre);
+    overflow: clip;
+    opacity: 0;
+    transform: translateY(-0.75rem) scale(0.985);
+    transition:
+      opacity 0.2s var(--sortie),
+      transform 0.3s var(--sortie),
+      overlay 0.3s allow-discrete,
+      display 0.3s allow-discrete;
+  }
+  .palette[open] {
+    display: grid;
+    opacity: 1;
+    transform: none;
+  }
+  @starting-style {
+    .palette[open] {
+      opacity: 0;
+      transform: translateY(-0.75rem) scale(0.985);
+    }
+  }
+  .palette::backdrop {
+    background: color-mix(in oklch, var(--fond) 55%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .palette__champ {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.1rem;
+    border-block-end: 1px solid var(--trait);
+    color: var(--encre-2);
+  }
+  .palette__champ input {
+    flex: 1;
+    min-inline-size: 0;
+    background: none;
+    border: 0;
+    outline: 0;
+    font-size: 1.0625rem;
+    color: var(--encre);
+  }
+  .palette__champ input::placeholder {
+    color: var(--encre-2);
+    opacity: 0.85;
+  }
+  .palette__liste {
+    margin: 0;
+    padding: 0.4rem;
+    list-style: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .palette__liste li {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr auto;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--rayon-s);
+    cursor: pointer;
+    scroll-margin: 0.4rem;
+  }
+  .palette__liste li[aria-selected='true'] {
+    background: var(--encre);
+    color: var(--fond);
+  }
+  .palette__groupe {
+    font-family: var(--f-etiquette);
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.65;
+  }
+  .palette__libelle {
+    font-weight: 600;
+  }
+  .palette__note {
+    font-size: var(--t-s);
+    opacity: 0.7;
+    text-align: end;
+  }
+  .palette__vide {
+    padding: 1.5rem 1.25rem;
+    color: var(--encre-2);
+  }
+  .palette__aide {
+    padding: 0.6rem 1.1rem;
+    border-block-start: 1px solid var(--trait);
+    font-family: var(--f-etiquette);
+    font-size: 0.75rem;
+    color: var(--encre-2);
+  }
+  @media (max-width: 34em) {
+    .palette__liste li {
+      grid-template-columns: 1fr auto;
+    }
+    .palette__groupe {
+      display: none;
+    }
+    .palette__aide {
+      display: none;
+    }
+  }
+  @media print {
+    .palette {
+      display: none !important;
+    }
+  }
+</style>

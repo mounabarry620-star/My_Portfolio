@@ -1,0 +1,73 @@
+---
+/**
+ * Icônes de l'interface. Elles viennent de la bibliothèque libre Lucide (https://lucide.dev,
+ * licence ISC) ; les deux logos de marque (GitHub, LinkedIn) viennent de Devicon
+ * (https://devicon.dev, licence MIT). Les fichiers SVG sont lus à la construction du site.
+ * Décoratives par défaut : le nom accessible est porté par le bouton ou le lien.
+ */
+const lucide = import.meta.glob<string>('/node_modules/lucide-static/icons/*.svg', { query: '?raw', import: 'default', eager: true });
+const marques = import.meta.glob<string>('/node_modules/devicon/icons/{github,linkedin}/*.svg', { query: '?raw', import: 'default', eager: true });
+
+/** Nom utilisé dans le site → nom du fichier chez Lucide. */
+const noms = {
+  'fleche-droite': 'arrow-right',
+  'fleche-bas': 'arrow-down',
+  'fleche-haut': 'arrow-up',
+  'fleche-gauche': 'arrow-left',
+  'fleche-sortie': 'arrow-up-right',
+  telecharger: 'download',
+  courriel: 'mail',
+  telephone: 'phone',
+  copier: 'copy',
+  valide: 'check',
+  menu: 'menu',
+  fermer: 'x',
+  recherche: 'search',
+  theme: 'contrast',
+  langue: 'globe',
+  imprimer: 'printer',
+  preuve: 'shield-check',
+  correspondance: 'repeat',
+} as const;
+const logos = {
+  github: '/node_modules/devicon/icons/github/github-original.svg',
+  linkedin: '/node_modules/devicon/icons/linkedin/linkedin-plain.svg',
+} as const;
+
+interface Props {
+  nom: keyof typeof noms | keyof typeof logos;
+  class?: string;
+  taille?: number;
+}
+const { nom, class: classe, taille = 24 } = Astro.props;
+
+const estLogo = nom in logos;
+const brut = estLogo
+  ? marques[logos[nom as keyof typeof logos]]
+  : lucide[`/node_modules/lucide-static/icons/${noms[nom as keyof typeof noms]}.svg`];
+if (!brut) throw new Error(`Icône introuvable : ${nom}`);
+// On garde seulement le dessin (l'intérieur de la balise <svg>) et son cadre (viewBox).
+const dessin = brut.replace(/<!--[\s\S]*?-->/g, '').replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+const cadre = /viewBox="([^"]+)"/.exec(brut)?.[1] ?? '0 0 24 24';
+---
+
+{
+  estLogo ? (
+    <svg class={classe} width={taille} height={taille} viewBox={cadre} fill="currentColor" aria-hidden="true" focusable="false" set:html={dessin.replace(/fill="[^"]*"/g, '')} />
+  ) : (
+    <svg
+      class={classe}
+      width={taille}
+      height={taille}
+      viewBox={cadre}
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      set:html={dessin}
+    />
+  )
+}
