@@ -150,7 +150,8 @@ Sans Turnstile, la limite par adresse IP reste active.
 
 ## Ancienne adresse (Vercel)
 
-Le site était hébergé sur Vercel jusqu'en novembre 2026. Le fichier `vercel.json` redirige
-désormais chaque adresse `portfolio-1-gamma-azure.vercel.app/…` vers la même page sur
-Cloudflare, pour que les CV, lettres et QR codes déjà envoyés continuent de fonctionner.
-Il faut que le dépôt GitHub soit à jour (`git push`) pour que Vercel applique ces redirections.
+Le site était hébergé sur Vercel jusqu'en novembre 2026. Vercel reconstruit toujours le site
+à chaque `git push`, mais quand la construction a lieu sur Vercel (variable `VERCEL=1`),
+l'intégration `redirectionVercel` d'`astro.config.mjs` remplace chaque page par une page qui
+renvoie aussitôt vers la même adresse sur Cloudflare. Les CV, lettres et QR codes déjà
+envoyés continuent donc de fonctionner.

@@ -1,6 +1,6 @@
 // Configuration Astro — https://docs.astro.build/en/reference/configuration-reference/
 import { createHash } from 'node:crypto';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, fontProviders } from 'astro/config';
@@ -79,6 +79,58 @@ function horsConnexion() {
   };
 }
 
+/**
+ * Ancienne adresse Vercel : quand le site est construit SUR Vercel (variable VERCEL=1),
+ * chaque page est remplacée par une page qui renvoie aussitôt vers la même adresse sur
+ * Cloudflare. Les CV, lettres et QR codes déjà envoyés continuent donc de marcher.
+ * Le service worker de l'ancienne adresse est remplacé par un script qui se désinstalle.
+ */
+function redirectionVercel() {
+  return {
+    name: 'redirection-vercel',
+    hooks: {
+      'astro:build:done': async ({ dir, logger }) => {
+        if (process.env.VERCEL !== '1') return;
+        const racine = fileURLToPath(dir);
+        const pages = [];
+        const parcourir = async (dossier) => {
+          for (const e of await readdir(dossier, { withFileTypes: true })) {
+            const chemin = join(dossier, e.name);
+            if (e.isDirectory()) await parcourir(chemin);
+            else if (e.name.endsWith('.html')) pages.push(chemin);
+          }
+        };
+        await parcourir(racine);
+        // Anciennes adresses de la version 1 (liens dans de vieux CV).
+        const anciennes = { 'cv/fr': '/cv/', 'cv/en': '/en/cv/', personal: '/' };
+        for (const [ancienne, nouvelle] of Object.entries(anciennes)) {
+          await mkdir(join(racine, ancienne), { recursive: true });
+          pages.push([join(racine, ancienne, 'index.html'), nouvelle]);
+        }
+        for (const entree of pages) {
+          const [page, force] = Array.isArray(entree) ? entree : [entree, null];
+          let chemin = force ?? '/' + relative(racine, page).split(sep).join('/');
+          chemin = chemin.endsWith('/404.html') ? '/' : chemin.replace(/index\.html$/, '');
+          const cible = new URL(chemin, site).href;
+          await writeFile(
+            page,
+            `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Le portfolio a déménagé</title>` +
+              `<link rel="canonical" href="${cible}"><meta name="robots" content="noindex">` +
+              `<meta http-equiv="refresh" content="0;url=${cible}">` +
+              `<script>location.replace(${JSON.stringify(cible)} + location.search + location.hash)</script></head>` +
+              `<body><p>Le portfolio a déménagé : <a href="${cible}">${cible}</a></p></body></html>`,
+          );
+        }
+        await writeFile(
+          join(racine, 'sw.js'),
+          "self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.registration.unregister()));",
+        );
+        logger.info(`${pages.length} pages remplacées par une redirection vers ${site}.`);
+      },
+    },
+  };
+}
+
 export default defineConfig({
   site,
   base,
@@ -105,7 +157,7 @@ export default defineConfig({
     police('Raleway', '--police-raleway', '300 800', ['Arial', 'sans-serif']),
     police('Yanone Kaffeesatz', '--police-yanone', '300 700', ['Arial Narrow', 'sans-serif']),
   ],
-  integrations: [horsConnexion()],
+  integrations: [horsConnexion(), redirectionVercel()],
   build: {
     // Le CSS (une douzaine de Ko compressés) est placé dans chaque page :
     // le navigateur peut afficher sans attendre un second fichier.
