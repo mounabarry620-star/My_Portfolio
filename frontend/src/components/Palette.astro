@@ -8,6 +8,7 @@ import Icone from './Icone.astro';
 import { ui } from '@/i18n/ui';
 import { routes, sections, type Langue } from '@/i18n';
 import { projets } from '@/data/projets';
+import { profil } from '@/data/profil';
 import { url } from '@/i18n';
 
 interface Props {
@@ -51,6 +52,20 @@ const commandes: Commande[] = [
     libelle: ui.palette.telechargerCv[l],
     href: url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mamadou_Bailo_Barry_EN.pdf'),
     action: 'telecharger',
+  },
+  {
+    groupe: ui.palette.actions[l],
+    libelle: ui.palette.carteMarseille[l],
+    note: profil.localisation.marseille.coordonnees,
+    href: profil.localisation.marseille.maps,
+    action: 'externe',
+  },
+  {
+    groupe: ui.palette.actions[l],
+    libelle: ui.palette.carteArles[l],
+    note: profil.localisation.arles.coordonnees,
+    href: profil.localisation.arles.maps,
+    action: 'externe',
   },
 ];
 ---

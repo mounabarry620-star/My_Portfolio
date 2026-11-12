@@ -133,6 +133,22 @@ export const ui = {
       fr: 'Disponible · stage 2027 · 12 semaines · ',
       en: 'Available · 2027 internship · 12 weeks · ',
     },
+    composter: {
+      fr: 'Composter le billet et valider ma disponibilité',
+      en: 'Stamp ticket and confirm availability',
+    },
+    tamponTitre: {
+      fr: 'COMPOSTÉ · DISPONIBLE',
+      en: 'STAMPED · AVAILABLE',
+    },
+    tamponSousTitre: {
+      fr: '29 MARS → 18 JUIN 2027 · PRÊT AU DÉPART',
+      en: '29 MAR → 18 JUN 2027 · READY TO BOARD',
+    },
+    voirCarte: {
+      fr: 'Ouvrir sur Google Maps',
+      en: 'Open on Google Maps',
+    },
     aria: {
       fr: 'Recherche de stage : 12 semaines, du 29 mars au 18 juin 2027, à temps plein, en développement logiciel et web.',
       en: 'Internship search: 12 weeks, 29 March to 18 June 2027, full time, software and web development.',
@@ -252,6 +268,19 @@ export const ui = {
     haut: { fr: 'Haut de page', en: 'Back to top' },
     source: { fr: 'Code source', en: 'Source code' },
     coulisses: { fr: 'Comment ce site est fait', en: 'How this site is made' },
+    localisationEtiquette: { fr: 'Localisation & mobilité', en: 'Location & mobility' },
+    localisationTitre: { fr: 'Basé à Marseille · Études à Arles', en: 'Based in Marseille · Studying in Arles' },
+    localisationNote: {
+      fr: "Mobile dans toute la région Provence-Alpes-Côte d'Azur et partout en France.",
+      en: 'Available across the Provence-Alpes-Côte d’Azur region and anywhere in France.',
+    },
+    heureLocale: { fr: 'Heure locale', en: 'Local time' },
+    domicile: { fr: 'Domicile · Marseille', en: 'Home · Marseille' },
+    campus: { fr: "Campus · IUT d'Arles", en: 'Campus · IUT Arles' },
+    centrerCarte: { fr: 'Voir sur la carte', en: 'Center on map' },
+    titreIframe: { fr: 'Carte interactive OpenStreetMap (Marseille et Arles)', en: 'Interactive OpenStreetMap (Marseille and Arles)' },
+    ouvrirMaps: { fr: 'Google Maps', en: 'Google Maps' },
+    ouvrirOsm: { fr: 'OpenStreetMap', en: 'OpenStreetMap' },
   },
 
   palette: {
@@ -268,6 +297,8 @@ export const ui = {
     lectureTechnique: { fr: 'Lecture technique', en: 'Technical reading' },
     copierMail: { fr: "Copier l'adresse e-mail", en: 'Copy email address' },
     telechargerCv: { fr: 'Télécharger le CV (PDF)', en: 'Download the CV (PDF)' },
+    carteMarseille: { fr: 'Voir Marseille sur Google Maps', en: 'View Marseille on Google Maps' },
+    carteArles: { fr: "Voir l'IUT d'Arles sur Google Maps", en: 'View IUT Arles on Google Maps' },
   },
 
   cv: {

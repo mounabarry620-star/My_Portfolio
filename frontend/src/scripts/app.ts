@@ -186,6 +186,10 @@ function initialiserPalette() {
       a.click();
       return;
     }
+    if (action === 'externe' && href) {
+      window.open(href, '_blank', 'noopener');
+      return;
+    }
     if (href) location.href = href;
   };
 
@@ -225,6 +229,48 @@ function initialiserPalette() {
   });
 }
 
+/* ------------------------------- Heure locale en direct (Marseille / Paris) */
+function initialiserHorloge() {
+  const conteneur = $<HTMLElement>('[data-horloge-fuseau]');
+  const affichage = $<HTMLElement>('[data-horloge-texte]', conteneur ?? document);
+  if (!conteneur || !affichage) return;
+  const fuseau = conteneur.dataset.horlogeFuseau ?? 'Europe/Paris';
+  const region = conteneur.dataset.horlogeLangue === 'en' ? 'en-GB' : 'fr-FR';
+  const format = new Intl.DateTimeFormat(region, {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: fuseau,
+  });
+  const maj = () => {
+    affichage.textContent = format.format(new Date());
+  };
+  maj();
+  setInterval(maj, 30_000);
+}
+
+/* ------------------ Sélecteur de lieu sur la carte OpenStreetMap en pied de page */
+function initialiserCarteOsm() {
+  const section = $<HTMLElement>('[data-loc]');
+  const iframe = $<HTMLIFrameElement>('[data-iframe-osm]', section ?? document);
+  if (!section || !iframe) return;
+
+  const boutons = $$<HTMLButtonElement>('[data-changer-carte]', section);
+  const cartes = $$<HTMLElement>('[data-lieu-carte]', section);
+  const lienDirect = $<HTMLAnchorElement>('[data-lien-osm-actif]', section);
+
+  section.addEventListener('click', (e) => {
+    const btn = (e.target as Element).closest<HTMLButtonElement>('[data-changer-carte]');
+    if (!btn) return;
+    const lieu = btn.dataset.changerCarte;
+    const embed = btn.dataset.embed;
+    const osm = btn.dataset.osm;
+    if (embed && iframe.src !== embed) iframe.src = embed;
+    if (osm && lienDirect) lienDirect.href = osm;
+    boutons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.changerCarte === lieu)));
+    cartes.forEach((c) => c.toggleAttribute('data-actif', c.dataset.lieuCarte === lieu));
+  });
+}
+
 /* ------------------------------------ Mode hors connexion (service worker) */
 function initialiserHorsConnexion() {
   if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
@@ -243,4 +289,6 @@ initialiserApparitions();
 initialiserCopie();
 initialiserOutils();
 initialiserPalette();
+initialiserHorloge();
+initialiserCarteOsm();
 initialiserHorsConnexion();

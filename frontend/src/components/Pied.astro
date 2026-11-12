@@ -1,5 +1,9 @@
 ---
-/** Pied de page : rappel de la recherche de stage, liens utiles et colophon. */
+/**
+ * Pied de page : carte interactive OpenStreetMap en direct (Marseille ↔ IUT d'Arles)
+ * avec redirection vers Google Maps / OpenStreetMap, heure locale en direct,
+ * rappel de la recherche de stage, liens utiles et colophon.
+ */
 import Icone from './Icone.astro';
 import { ui } from '@/i18n/ui';
 import { routes, dateLongue, type Langue } from '@/i18n';
@@ -12,14 +16,152 @@ const { langue: l } = Astro.props;
 const maj = new Intl.DateTimeFormat(l === 'fr' ? 'fr-FR' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
   new Date(`${profil.miseAJour}-01T00:00:00Z`),
 );
+const heureInitiale = new Intl.DateTimeFormat(l === 'fr' ? 'fr-FR' : 'en-GB', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: profil.localisation.fuseau,
+}).format(new Date());
+
 const rappel = {
   fr: `Stage de ${stage.semaines} semaines · ${dateLongue(stage.debut, 'fr')} → ${dateLongue(stage.fin, 'fr')}`,
   en: `${stage.semaines}-week internship · ${dateLongue(stage.debut, 'en')} → ${dateLongue(stage.fin, 'en')}`,
 };
+const { marseille, arles, fuseau } = profil.localisation;
 ---
 
 <footer class="pied">
   <div class="conteneur pied__cadre">
+    <!-- Bloc Localisation & Interface OpenStreetMap en direct -->
+    <section class="loc" id="localisation" aria-labelledby="titre-localisation" data-revele data-loc>
+      <div class="loc__infos">
+        <div class="loc__entete">
+          <span class="puce puce--accent">
+            <Icone nom="lieu" taille={14} />
+            {ui.pied.localisationEtiquette[l]}
+          </span>
+          <span class="loc__horloge" data-horloge-fuseau={fuseau} data-horloge-langue={l}>
+            <span class="loc__voyant" aria-hidden="true"></span>
+            <Icone nom="horloge" taille={14} />
+            <span>{ui.pied.heureLocale[l]} · <strong data-horloge-texte>{heureInitiale}</strong> CET</span>
+          </span>
+        </div>
+
+        <h2 class="titre-3 loc__titre" id="titre-localisation">{ui.pied.localisationTitre[l]}</h2>
+        <p class="loc__note">{ui.pied.localisationNote[l]}</p>
+
+        <div class="loc__lieux">
+          <div class="loc__carte-lieu" data-lieu-carte="marseille" data-actif>
+            <div class="loc__lieu-tete">
+              <button
+                type="button"
+                class="loc__cible"
+                data-changer-carte="marseille"
+                data-embed={marseille.embed}
+                data-maps={marseille.maps}
+                data-osm={marseille.osm}
+                aria-pressed="true"
+              >
+                <span class="loc__point-etat" aria-hidden="true"></span>
+                <span class="etiquette">{ui.pied.domicile[l]}</span>
+              </button>
+              <code class="loc__gps">{marseille.coordonnees}</code>
+            </div>
+            <div class="loc__actions">
+              <a class="bouton bouton--compact" href={marseille.maps} target="_blank" rel="noopener">
+                <Icone nom="lieu" taille={16} />
+                {ui.pied.ouvrirMaps[l]}
+                <span class="cache-visuel"> — {marseille.nom} {ui.commun.nouvelOnglet[l]}</span>
+                <Icone nom="fleche-sortie" taille={15} />
+              </a>
+              <a class="lien loc__osm" href={marseille.osm} target="_blank" rel="noopener">
+                {ui.pied.ouvrirOsm[l]}
+                <span class="cache-visuel"> — {marseille.nom} {ui.commun.nouvelOnglet[l]}</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="loc__carte-lieu" data-lieu-carte="arles">
+            <div class="loc__lieu-tete">
+              <button
+                type="button"
+                class="loc__cible"
+                data-changer-carte="arles"
+                data-embed={arles.embed}
+                data-maps={arles.maps}
+                data-osm={arles.osm}
+                aria-pressed="false"
+              >
+                <span class="loc__point-etat" aria-hidden="true"></span>
+                <span class="etiquette">{ui.pied.campus[l]}</span>
+              </button>
+              <code class="loc__gps">{arles.coordonnees}</code>
+            </div>
+            <div class="loc__actions">
+              <a class="bouton bouton--compact bouton--contour" href={arles.maps} target="_blank" rel="noopener">
+                <Icone nom="boussole" taille={16} />
+                {ui.pied.ouvrirMaps[l]}
+                <span class="cache-visuel"> — {arles.nom} {ui.commun.nouvelOnglet[l]}</span>
+                <Icone nom="fleche-sortie" taille={15} />
+              </a>
+              <a class="lien loc__osm" href={arles.osm} target="_blank" rel="noopener">
+                {ui.pied.ouvrirOsm[l]}
+                <span class="cache-visuel"> — {arles.nom} {ui.commun.nouvelOnglet[l]}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interface directe OpenStreetMap intégrée, avec sélecteur rapide Marseille / Arles -->
+      <div class="loc__cadre-osm">
+        <div class="loc__barre-osm">
+          <div class="lecture loc__onglets" role="group" aria-label={ui.pied.centrerCarte[l]}>
+            <button
+              type="button"
+              data-changer-carte="marseille"
+              data-embed={marseille.embed}
+              data-maps={marseille.maps}
+              data-osm={marseille.osm}
+              aria-pressed="true"
+            >
+              Marseille
+            </button>
+            <button
+              type="button"
+              data-changer-carte="arles"
+              data-embed={arles.embed}
+              data-maps={arles.maps}
+              data-osm={arles.osm}
+              aria-pressed="false"
+            >
+              IUT d'Arles
+            </button>
+          </div>
+          <a
+            class="lien loc__lien-direct"
+            href={marseille.osm}
+            target="_blank"
+            rel="noopener"
+            data-lien-osm-actif
+          >
+            {ui.pied.ouvrirOsm[l]}
+            <Icone nom="fleche-sortie" taille={15} />
+          </a>
+        </div>
+
+        <div class="loc__fenetre-osm">
+          <iframe
+            class="loc__iframe"
+            data-iframe-osm
+            src={marseille.embed}
+            title={ui.pied.titreIframe[l]}
+            loading="lazy"
+            referrerpolicy="no-referrer"
+          ></iframe>
+        </div>
+      </div>
+    </section>
+
     <div class="pied__haut">
       <p class="pied__rappel">
         <span class="pastille" aria-hidden="true">→</span>
@@ -36,6 +178,11 @@ const rappel = {
     <div class="pied__bas">
       <ul class="pied__liens" role="list">
         <li><a href={`mailto:${profil.email}`}>{profil.email}</a></li>
+        <li>
+          <a href={marseille.maps} rel="noopener" target="_blank">
+            Marseille (Maps)<span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
+          </a>
+        </li>
         <li>
           <a href={profil.liens.linkedin} rel="me noopener" target="_blank">
             LinkedIn<span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
@@ -67,6 +214,187 @@ const rappel = {
   .pied__cadre {
     container-type: inline-size;
   }
+
+  /* ---- Section Localisation & Carte OpenStreetMap intégrée ---- */
+  .loc {
+    display: grid;
+    gap: 1.5rem clamp(1.5rem, 4vw, 2.75rem);
+    margin-block-end: clamp(2.25rem, 5vw, 3.75rem);
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon);
+    background: var(--surface);
+    box-shadow: var(--ombre);
+    scroll-margin-top: calc(var(--entete-h) + 1.5rem);
+  }
+  .loc__infos {
+    display: grid;
+    gap: 0.85rem;
+    align-content: start;
+  }
+  .loc__entete {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.85rem;
+  }
+  .loc__horloge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid var(--trait);
+    border-radius: 999px;
+    font-family: var(--f-mono);
+    font-size: 0.75rem;
+    color: var(--encre-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .loc__horloge strong {
+    color: var(--encre);
+  }
+  .loc__voyant {
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    border-radius: 50%;
+    background: oklch(72% 0.19 148);
+    box-shadow: 0 0 0 3px oklch(72% 0.19 148 / 0.22);
+    animation: pulsation 2.2s ease-in-out infinite;
+  }
+  @keyframes pulsation {
+    50% {
+      opacity: 0.4;
+      transform: scale(0.85);
+    }
+  }
+  .loc__titre {
+    margin-block-start: 0.15rem;
+  }
+  .loc__note {
+    color: var(--encre-2);
+    font-size: var(--t-s);
+    max-inline-size: 38rem;
+  }
+  .loc__lieux {
+    display: grid;
+    gap: 0.75rem;
+    margin-block-start: 0.35rem;
+  }
+  @media (min-width: 38em) {
+    .loc__lieux {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .loc__carte-lieu {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    border: 1.5px solid var(--trait);
+    border-radius: var(--rayon-m);
+    background: var(--fond);
+    transition:
+      border-color 0.25s,
+      box-shadow 0.25s;
+  }
+  .loc__carte-lieu[data-actif] {
+    border-color: var(--accent-encre);
+  }
+  .loc__lieu-tete {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem 0.75rem;
+  }
+  .loc__cible {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    text-align: start;
+  }
+  .loc__point-etat {
+    inline-size: 0.55rem;
+    block-size: 0.55rem;
+    border-radius: 50%;
+    border: 1.5px solid var(--trait-fort);
+    background: transparent;
+    transition:
+      background-color 0.25s,
+      border-color 0.25s,
+      transform 0.3s var(--ressort);
+  }
+  .loc__carte-lieu[data-actif] .loc__point-etat {
+    background: var(--accent);
+    border-color: var(--accent-encre);
+    transform: scale(1.15);
+  }
+  .loc__gps {
+    font-size: 0.72rem;
+    color: var(--encre-2);
+  }
+  .loc__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.85rem;
+  }
+  .loc__osm {
+    font-size: 0.8125rem;
+  }
+
+  /* ---- Fenêtre OpenStreetMap intégrée ---- */
+  .loc__cadre-osm {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    border-radius: var(--rayon-m);
+    overflow: clip;
+    border: 1px solid var(--trait);
+    background: var(--fond-2);
+    min-block-size: 16.5rem;
+  }
+  .loc__barre-osm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--fond);
+    border-block-end: 1px solid var(--trait);
+  }
+  .loc__onglets button {
+    padding: 0.32rem 0.75rem;
+    font-size: 0.78rem;
+  }
+  .loc__lien-direct {
+    font-size: 0.78rem;
+  }
+  .loc__fenetre-osm {
+    position: relative;
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 14rem;
+  }
+  .loc__iframe {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 14rem;
+    border: 0;
+  }
+  /* Adaptation douce des tuiles OpenStreetMap dans les thèmes sombres */
+  :global([data-theme='conakry']) .loc__iframe,
+  :global([data-theme='machine']) .loc__iframe {
+    filter: invert(0.92) hue-rotate(180deg) brightness(0.95) contrast(0.92);
+  }
+
+  @media (min-width: 62em) {
+    .loc {
+      grid-template-columns: 1.05fr 1.15fr;
+      align-items: stretch;
+    }
+  }
+
   .pied__haut {
     display: flex;
     flex-wrap: wrap;
@@ -143,6 +471,11 @@ const rappel = {
     }
     .pied__colophon {
       text-align: end;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .loc__voyant {
+      animation: none;
     }
   }
   @media print {

@@ -21,6 +21,28 @@ export const profil = {
   },
   /** Mois de la dernière mise à jour du contenu (affiché en pied de page). */
   miseAJour: '2026-11',
+  /** Coordonnées géographiques et liens directs vers les cartes (sans clé d'API ni traceur). */
+  localisation: {
+    fuseau: 'Europe/Paris',
+    marseille: {
+      nom: 'Marseille',
+      coordonnees: '43°17′47″N · 5°22′11″E',
+      lat: 43.2965,
+      lon: 5.3698,
+      embed: 'https://www.openstreetmap.org/export/embed.html?bbox=5.3150%2C43.2650%2C5.4250%2C43.3280&layer=mapnik&marker=43.2965%2C5.3698',
+      maps: 'https://www.google.com/maps/search/?api=1&query=43.2965,5.3698',
+      osm: 'https://www.openstreetmap.org/?mlat=43.2965&mlon=5.3698#map=13/43.2965/5.3698',
+    },
+    arles: {
+      nom: "IUT d'Aix-Marseille · Arles",
+      coordonnees: '43°40′22″N · 4°38′25″E',
+      lat: 43.6728,
+      lon: 4.6403,
+      embed: 'https://www.openstreetmap.org/export/embed.html?bbox=4.6100%2C43.6580%2C4.6700%2C43.6880&layer=mapnik&marker=43.6728%2C4.6403',
+      maps: "https://www.google.com/maps/search/?api=1&query=IUT+Aix-Marseille+Arles+Rue+Raoul+Follereau",
+      osm: 'https://www.openstreetmap.org/?mlat=43.6728&mlon=4.6403#map=15/43.6728/4.6403',
+    },
+  },
 } as const;
 
 /** Recherche de stage : dates officielles du stage de BUT 2 (présentation « Stage 26-27 »). */

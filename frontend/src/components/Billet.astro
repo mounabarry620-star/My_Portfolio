@@ -2,14 +2,16 @@
 /**
  * Le « billet de stage » : l'encadré qui dit, au premier coup d'œil, ce que je cherche.
  * Présenté comme un titre de transport : de l'IUT vers l'équipe d'accueil, avec les dates.
- * Le QR code (généré à la construction du site) ouvre le CV en ligne.
+ * Inclut un portrait en parallaxe multicouche, un bouton pour « composter » le billet,
+ * des liens géographiques directs et un QR code qui ouvre le CV en ligne.
  */
 import { Picture } from 'astro:assets';
 import QRCode from 'qrcode';
+import Icone from './Icone.astro';
 import portrait from '@/assets/portrait-detoure.png';
 import { ui } from '@/i18n/ui';
 import { dateBillet, routes, type Langue } from '@/i18n';
-import { stage } from '@/data/profil';
+import { profil, stage } from '@/data/profil';
 
 interface Props {
   langue: Langue;
@@ -31,11 +33,14 @@ const annee = (iso: string) => iso.slice(0, 4);
 
 <article class="billet" aria-label={ui.billet.aria[l]} data-billet>
   <div class="billet__carte" data-billet-carte>
-    <!-- Portrait détouré, centré sur le visage, posé devant une arche de couleur -->
+    <!-- Portrait détouré en parallaxe 2.5D devant une arche éditoriale et un halo lumineux -->
     <div class="billet__scene">
       <div class="billet__fond" aria-hidden="true">
+        <span class="billet__grille"></span>
+        <span class="billet__halo"></span>
         <span class="billet__arche"></span>
         <span class="billet__grain"></span>
+        <span class="billet__coord">{profil.localisation.marseille.coordonnees}</span>
       </div>
       <Picture
         class="billet__portrait"
@@ -50,16 +55,34 @@ const annee = (iso: string) => iso.slice(0, 4);
         decoding="async"
         quality={74}
       />
-      <svg class="billet__badge" viewBox="0 0 120 120" aria-hidden="true">
-        <defs>
-          <path id={`cercle-${l}`} d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0"></path>
-        </defs>
-        <circle cx="60" cy="60" r="58"></circle>
-        <g class="billet__badge-texte">
-          <text><textPath href={`#cercle-${l}`} textLength="276">{ui.billet.badge[l]}</textPath></text>
-        </g>
-        <path class="billet__badge-fleche" d="M50 70 70 50M54 50h16v16"></path>
-      </svg>
+
+      <!-- Bouton macaron interactif : permet de « composter » le billet -->
+      <button
+        type="button"
+        class="billet__badge"
+        data-composter
+        aria-pressed="false"
+        aria-label={ui.billet.composter[l]}
+        title={ui.billet.composter[l]}
+      >
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <defs>
+            <path id={`cercle-${l}`} d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0"></path>
+          </defs>
+          <circle cx="60" cy="60" r="58"></circle>
+          <g class="billet__badge-texte">
+            <text><textPath href={`#cercle-${l}`} textLength="276">{ui.billet.badge[l]}</textPath></text>
+          </g>
+          <path class="billet__badge-fleche" d="M50 70 70 50M54 50h16v16"></path>
+          <path class="billet__badge-coche" d="m45 61 10 10 21-22"></path>
+        </svg>
+      </button>
+
+      <!-- Tampon de compostage qui apparaît au clic sur le macaron -->
+      <div class="billet__tampon" aria-hidden="true">
+        <span class="billet__tampon-titre">{ui.billet.tamponTitre[l]}</span>
+        <span class="billet__tampon-date">{ui.billet.tamponSousTitre[l]}</span>
+      </div>
     </div>
 
     <header class="billet__tete">
@@ -73,7 +96,18 @@ const annee = (iso: string) => iso.slice(0, 4);
       <div class="billet__trajet">
         <p>
           <span class="etiquette">{ui.billet.de[l]}</span>
-          <strong>{ui.billet.origine[l]}</strong>
+          <strong>
+            <a
+              class="billet__lieu"
+              href={profil.localisation.arles.maps}
+              target="_blank"
+              rel="noopener"
+              title={`${ui.billet.origine[l]} — ${ui.billet.voirCarte[l]}`}
+            >
+              {ui.billet.origine[l]}
+              <Icone nom="lieu" taille={14} />
+            </a>
+          </strong>
           <small>{ui.billet.origineNote[l]}</small>
         </p>
         <svg class="billet__voie" viewBox="0 0 64 16" aria-hidden="true">
@@ -83,7 +117,9 @@ const annee = (iso: string) => iso.slice(0, 4);
         </svg>
         <p>
           <span class="etiquette">{ui.billet.vers[l]}</span>
-          <strong>{ui.billet.destination[l]}</strong>
+          <strong>
+            <a class="billet__destination" href="#contact">{ui.billet.destination[l]}</a>
+          </strong>
           <small>{ui.billet.destinationNote[l]}</small>
         </p>
       </div>
@@ -125,7 +161,10 @@ const annee = (iso: string) => iso.slice(0, 4);
           <span class="etiquette">{ui.billet.option[l]}</span>
           {ui.billet.optionValeur[l]}
           <span class="etiquette billet__mobilite">{ui.billet.mobilite[l]}</span>
-          {ui.billet.mobiliteValeur[l]}
+          <a class="billet__carte-lien" href="#localisation">
+            <Icone nom="lieu" taille={13} />
+            {ui.billet.mobiliteValeur[l]}
+          </a>
         </p>
       </footer>
     </div>
@@ -137,10 +176,12 @@ const annee = (iso: string) => iso.slice(0, 4);
   .billet {
     --inclinaison-x: 0deg;
     --inclinaison-y: 0deg;
+    --decalage-x: 0px;
+    --decalage-y: 0px;
     --reflet-x: 50%;
     --reflet-y: 0%;
     inline-size: min(100%, 26rem);
-    perspective: 70rem;
+    perspective: 75rem;
     container-type: inline-size;
   }
   .billet__carte {
@@ -166,75 +207,132 @@ const annee = (iso: string) => iso.slice(0, 4);
     z-index: 3;
   }
 
-  /* ---- Scène du portrait ---- */
+  /* ---- Scène du portrait (avec parallaxe multicouche et effet « hors-cadre » en haut) ---- */
   .billet__scene {
     position: relative;
-    block-size: clamp(13rem, 36svh, 19rem);
+    block-size: clamp(13.5rem, 36svh, 19rem);
+    transform-style: preserve-3d;
   }
   .billet__fond {
     position: absolute;
     inset: 0;
     overflow: clip;
     border-radius: var(--rayon) var(--rayon) 0 0;
-    background: var(--accent);
+    background:
+      radial-gradient(120% 95% at 50% 100%, color-mix(in oklch, var(--accent) 82%, var(--surface)) 0%, color-mix(in oklch, var(--fond-2) 72%, var(--accent)) 100%);
   }
-  /* Grande arche derrière le buste */
+  /* Fine grille géométrique de titre sécurisé */
+  .billet__grille {
+    position: absolute;
+    inset: -15%;
+    opacity: 0.16;
+    background-image:
+      linear-gradient(to right, var(--encre) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--encre) 1px, transparent 1px);
+    background-size: 1.35rem 1.35rem;
+    mask-image: radial-gradient(circle at 50% 35%, #000 15%, transparent 78%);
+    transform: translate3d(calc(var(--decalage-x) * -0.25), calc(var(--decalage-y) * -0.25), 0);
+  }
+  /* Halo lumineux doux derrière les épaules pour détacher le visage */
+  .billet__halo {
+    position: absolute;
+    inset: 8% 12% -15%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in oklch, var(--surface) 75%, var(--accent)), transparent 82%);
+    opacity: 0.7;
+    transform: translate3d(calc(var(--decalage-x) * -0.35), calc(var(--decalage-y) * -0.25), 0);
+  }
+  /* Grande arche éditoriale derrière le buste */
   .billet__arche {
     position: absolute;
-    inset: 18% 14% -10%;
+    inset: 16% 13% -10%;
     border-radius: 999px 999px 0 0;
-    background: var(--accent-2);
-    transition: transform 0.9s var(--sortie);
+    background: linear-gradient(165deg, var(--accent-2), color-mix(in oklch, var(--accent-2) 68%, var(--encre)));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 28%, transparent),
+      0 10px 30px -10px oklch(10% 0.02 60 / 0.35);
+    transform: translate3d(calc(var(--decalage-x) * -0.5), calc(var(--decalage-y) * -0.35), 0);
+    transition: transform 0.6s var(--sortie);
+  }
+  /* Coordonnées GPS verticales en filigrane, façon billet international */
+  .billet__coord {
+    position: absolute;
+    inset: 0.85rem auto auto 0.85rem;
+    font-family: var(--f-mono);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--encre);
+    opacity: 0.55;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--surface) 60%, transparent);
+    backdrop-filter: blur(4px);
   }
   /* Grain papier : bruit SVG (feTurbulence), comme une texture d'impression */
   .billet__grain {
     position: absolute;
     inset: 0;
-    opacity: 0.32;
+    opacity: 0.26;
     mix-blend-mode: multiply;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   }
-  /* Le portrait : posé en bas, centré, entièrement dans le cadre coloré */
+  /* Le portrait : coupé net en bas mais autorisé à dépasser légèrement en haut (effet Pop-out) */
   .billet__scene :global(picture) {
     position: absolute;
-    inset: 0;
+    inset: -1.4rem 0 0 0;
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    overflow: clip;
-    border-radius: var(--rayon) var(--rayon) 0 0;
+    clip-path: inset(-2rem 0 0 0 round var(--rayon) var(--rayon) 0 0);
     pointer-events: none;
+    transform: translateZ(1.35rem);
   }
   .billet__scene :global(img) {
-    block-size: 100%;
+    block-size: calc(100% - 1.1rem);
     inline-size: 100%;
     object-fit: contain;
     object-position: 50% 100%;
-    filter: drop-shadow(0 18px 22px oklch(10% 0.02 60 / 0.28));
+    filter: drop-shadow(0 18px 24px oklch(10% 0.02 60 / 0.34));
     transform-origin: 50% 100%;
-    transition: transform 0.9s var(--sortie);
+    transform: translate3d(calc(var(--decalage-x) * 0.55), calc(var(--decalage-y) * 0.25), 0);
+    transition: transform 0.65s var(--sortie);
   }
   @media (hover: hover) {
     .billet:hover .billet__scene :global(img) {
-      transform: translateY(-0.35rem) scale(1.025);
+      transform: translate3d(calc(var(--decalage-x) * 0.55), calc(var(--decalage-y) * 0.25 - 0.45rem), 0) scale(1.045);
     }
     .billet:hover .billet__arche {
-      transform: scale(1.04);
+      transform: translate3d(calc(var(--decalage-x) * -0.5), calc(var(--decalage-y) * -0.35), 0) scale(1.035);
     }
   }
 
-  /* Badge rond qui tourne lentement, comme un tampon */
+  /* Badge rond interactif qui tourne lentement et composte le billet au clic */
   .billet__badge {
     position: absolute;
     inset: 0.75rem 0.75rem auto auto;
-    z-index: 5;
+    z-index: 6;
     inline-size: clamp(5.25rem, 23cqi, 6.25rem);
-    filter: drop-shadow(0 8px 14px oklch(10% 0.02 60 / 0.25));
-    block-size: auto;
+    block-size: clamp(5.25rem, 23cqi, 6.25rem);
+    border-radius: 50%;
+    filter: drop-shadow(0 10px 16px oklch(10% 0.02 60 / 0.28));
+    transform: translateZ(2.2rem);
+    transition: transform 0.45s var(--ressort);
+  }
+  .billet__badge:hover {
+    transform: translateZ(2.5rem) scale(1.07);
+  }
+  .billet__badge:active {
+    transform: translateZ(1.8rem) scale(0.93);
+  }
+  .billet__badge svg {
+    inline-size: 100%;
+    block-size: 100%;
     overflow: visible;
   }
   .billet__badge circle {
     fill: var(--encre);
+    transition: fill 0.35s;
   }
   .billet__badge text {
     fill: var(--fond);
@@ -248,17 +346,80 @@ const annee = (iso: string) => iso.slice(0, 4);
     transform-origin: 60px 60px;
     animation: tourne 18s linear infinite;
   }
-  .billet__badge-fleche {
+  .billet__badge-fleche,
+  .billet__badge-coche {
     fill: none;
     stroke: var(--accent);
-    stroke-width: 4;
+    stroke-width: 4.5;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition:
+      opacity 0.3s,
+      transform 0.4s var(--ressort);
+    transform-origin: 60px 60px;
+  }
+  .billet__badge-coche {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  .billet[data-composte] .billet__badge-fleche {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  .billet[data-composte] .billet__badge-coche {
+    opacity: 1;
+    transform: scale(1);
+    stroke: var(--sur-accent);
+  }
+  .billet[data-composte] .billet__badge circle {
+    fill: var(--accent);
+  }
+  .billet[data-composte] .billet__badge text {
+    fill: var(--sur-accent);
   }
   @keyframes tourne {
     to {
       transform: rotate(360deg);
     }
+  }
+
+  /* Tampon de compostage ferroviaire */
+  .billet__tampon {
+    position: absolute;
+    inset: auto auto 0.85rem 0.9rem;
+    z-index: 5;
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.35rem 0.65rem;
+    border: 2px solid var(--accent);
+    border-radius: var(--rayon-s);
+    background: color-mix(in oklch, var(--encre) 86%, transparent);
+    color: var(--accent);
+    backdrop-filter: blur(6px);
+    font-family: var(--f-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    box-shadow: 0 8px 20px oklch(10% 0.02 60 / 0.32);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateZ(2rem) rotate(-8deg) scale(1.35);
+    transition:
+      opacity 0.25s var(--sortie),
+      transform 0.5s var(--ressort);
+  }
+  .billet[data-composte] .billet__tampon {
+    opacity: 1;
+    transform: translateZ(2rem) rotate(-6deg) scale(1);
+  }
+  .billet__tampon-titre {
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .billet__tampon-date {
+    font-size: 0.56rem;
+    font-weight: 600;
+    opacity: 0.9;
   }
 
   .billet__tete {
@@ -337,6 +498,26 @@ const annee = (iso: string) => iso.slice(0, 4);
     font-variation-settings: var(--titre-variation);
     letter-spacing: calc(var(--titre-interlettre) * 0.7);
     line-height: 1.1;
+  }
+  .billet__lieu,
+  .billet__destination {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22em;
+    text-decoration: none;
+    transition: color 0.25s;
+  }
+  .billet__lieu :global(svg) {
+    color: var(--accent-encre);
+    flex: none;
+    transition: transform 0.35s var(--ressort);
+  }
+  .billet__lieu:hover,
+  .billet__destination:hover {
+    color: var(--accent-encre);
+  }
+  .billet__lieu:hover :global(svg) {
+    transform: translateY(-2px) scale(1.12);
   }
   .billet__trajet small {
     display: block;
@@ -419,17 +600,48 @@ const annee = (iso: string) => iso.slice(0, 4);
   .billet__mobilite {
     margin-block-start: 0.45rem;
   }
+  .billet__carte-lien {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
+    text-underline-offset: 0.18em;
+    transition:
+      color 0.2s,
+      text-decoration-color 0.2s;
+  }
+  .billet__carte-lien :global(svg) {
+    color: var(--accent-encre);
+    flex: none;
+  }
+  .billet__carte-lien:hover {
+    color: var(--accent-encre);
+    text-decoration-color: currentColor;
+  }
 
-  /* Reflet qui suit le pointeur */
+  /* Reflet holographique de titre de transport sécurisé qui suit le pointeur */
   .billet__reflet {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: radial-gradient(
-      circle at var(--reflet-x) var(--reflet-y),
-      color-mix(in oklch, white 34%, transparent),
-      transparent 42%
-    );
+    background:
+      radial-gradient(
+        circle at var(--reflet-x) var(--reflet-y),
+        color-mix(in oklch, white 34%, transparent),
+        transparent 44%
+      ),
+      linear-gradient(
+        118deg,
+        transparent 22%,
+        color-mix(in oklch, var(--accent) 22%, transparent) 45%,
+        color-mix(in oklch, var(--accent-2) 20%, transparent) 54%,
+        transparent 76%
+      );
+    background-size: 100% 100%, 220% 220%;
+    background-position:
+      0 0,
+      var(--reflet-x) var(--reflet-y);
     mix-blend-mode: soft-light;
     opacity: 0;
     transition: opacity 0.4s;

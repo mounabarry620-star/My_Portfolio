@@ -1,6 +1,6 @@
 /**
- * Haut de page : compte à rebours avant le stage, billet qui s'incline sous le pointeur,
- * et chargement différé du fond animé (WebGL).
+ * Haut de page : compte à rebours avant le stage, billet en parallaxe multicouche
+ * qui s'incline et se composte au clic, et chargement différé du fond animé (WebGL).
  */
 
 const moinsDeMouvement = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -31,10 +31,45 @@ function majJours() {
   if (lisible) lisible.textContent = String(jours);
 }
 
-/* ------------------------------- Billet : inclinaison + reflet (pointeur) */
+/* --------------------- Petit son mécanique de compostage (Web Audio API) */
+function sonCompostage(actif: boolean) {
+  if (moinsDeMouvement) return;
+  try {
+    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(actif ? 150 : 220, t);
+    osc.frequency.exponentialRampToValueAtTime(actif ? 520 : 120, t + 0.065);
+    gain.gain.setValueAtTime(0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.075);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.08);
+    osc.onended = () => void ctx.close();
+  } catch {
+    /* Audio non disponible : silencieux */
+  }
+}
+
+/* ---------------- Billet : inclinaison + parallaxe 2.5D + compostage */
 function inclinerBillet() {
   const billet = document.querySelector<HTMLElement>('[data-billet]');
-  if (!billet || moinsDeMouvement || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (!billet) return;
+
+  // Bouton macaron pour « composter » le billet
+  const btnComposter = billet.querySelector<HTMLButtonElement>('[data-composter]');
+  btnComposter?.addEventListener('click', () => {
+    const composte = billet.toggleAttribute('data-composte');
+    btnComposter.setAttribute('aria-pressed', String(composte));
+    sonCompostage(composte);
+  });
+
+  if (moinsDeMouvement || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
   // Position visée et position affichée : la carte rejoint le pointeur avec un effet de ressort.
   const vise = { x: 0, y: 0 };
@@ -49,8 +84,10 @@ function inclinerBillet() {
     vitesse.y = (vitesse.y + (vise.y - affiche.y) * raideur) * frein;
     affiche.x += vitesse.x;
     affiche.y += vitesse.y;
-    billet.style.setProperty('--inclinaison-y', `${(affiche.x * 9).toFixed(2)}deg`);
-    billet.style.setProperty('--inclinaison-x', `${(-affiche.y * 7).toFixed(2)}deg`);
+    billet.style.setProperty('--inclinaison-y', `${(affiche.x * 9.5).toFixed(2)}deg`);
+    billet.style.setProperty('--inclinaison-x', `${(-affiche.y * 7.5).toFixed(2)}deg`);
+    billet.style.setProperty('--decalage-x', `${(affiche.x * 16).toFixed(1)}px`);
+    billet.style.setProperty('--decalage-y', `${(affiche.y * 12).toFixed(1)}px`);
     const immobile =
       Math.abs(vitesse.x) + Math.abs(vitesse.y) < 0.0004 && Math.abs(vise.x - affiche.x) + Math.abs(vise.y - affiche.y) < 0.0004;
     image = immobile ? 0 : requestAnimationFrame(animer);
