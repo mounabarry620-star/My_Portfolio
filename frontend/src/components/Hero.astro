@@ -22,8 +22,6 @@ const cvPdf = url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mam
 ---
 
 <section class="hero" aria-labelledby="titre-hero" data-hero>
-  <canvas class="hero__fond" data-fond-gl aria-hidden="true"></canvas>
-
   <div class="hero__grille conteneur">
     <div class="hero__texte">
       <p class="hero__salut">
@@ -48,21 +46,14 @@ const cvPdf = url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mam
         <Niveaux texte={ui.hero.accroche} langue={l} />
       </div>
 
-      <!-- Tableau des départs : la recherche de stage, lisible d'un coup d'œil -->
-      <p class="depart">
-        <span class="depart__case depart__case--titre">
-          <span class="depart__voyant" aria-hidden="true"></span>
-          {ui.hero.departLabel[l]}
-        </span>
-        <span class="depart__case">{ui.hero.departObjet[l]}</span>
-        <span class="depart__case">
-          <time datetime={stage.debut}>{dateLongue(stage.debut, l)}</time>
-        </span>
-        <span class="depart__case depart__case--jours" data-jours={stage.debut} data-prefixe={ui.hero.jours[l]}>
-          <span aria-hidden="true" class="depart__volets" data-volets>
-            {`${ui.hero.jours[l]}${jours}`.split('').map((c, i) => <b style={`--i: ${i}`}>{c}</b>)}
+      <!-- La recherche de stage, en une phrase -->
+      <p class="disponible">
+        <span class="disponible__point" aria-hidden="true"></span>
+        <span>
+          {ui.hero.disponible[l]} <time datetime={stage.debut}>{dateLongue(stage.debut, l)}</time>
+          <span class="disponible__jours" data-jours={stage.debut}>
+            ({ui.hero.dans[l]} <span data-jours-texte>{jours}</span> {ui.hero.jours[l]})
           </span>
-          <span class="cache-visuel"><span data-jours-texte>{jours}</span> {ui.hero.joursAria[l]}</span>
         </span>
       </p>
 
@@ -110,21 +101,6 @@ const cvPdf = url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mam
     z-index: -2;
     pointer-events: none;
   }
-  .hero__fond {
-    position: absolute;
-    inset: 0;
-    inline-size: 100%;
-    block-size: 100%;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 1.4s var(--sortie);
-    pointer-events: none;
-    mask-image: linear-gradient(to bottom, #000 62%, transparent);
-  }
-  .hero__fond[data-pret] {
-    opacity: 1;
-  }
-
   .hero__grille {
     display: grid;
     gap: clamp(2.25rem, 6vw, 4rem);
@@ -233,91 +209,31 @@ const cvPdf = url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mam
     color: var(--encre-2);
   }
 
-  /* ---- Tableau des départs ---- */
-  .depart {
+  /* ---- Disponibilité ---- */
+  .disponible {
     display: flex;
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 2px;
-    padding: 2px;
+    align-items: baseline;
+    gap: 0.6rem;
+    max-inline-size: 38rem;
+    padding: 0.7rem 1rem;
     border-radius: var(--rayon-m);
-    background: var(--encre);
-    color: var(--fond);
-    font-family: var(--f-etiquette);
-    font-size: 0.875rem;
+    background: var(--fond-2);
+    border: 1px solid var(--trait);
     font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: 0;
-    box-shadow: var(--ombre);
-    max-inline-size: 100%;
+    line-height: 1.4;
   }
-  .depart__case {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 0.8rem;
-    border-radius: calc(var(--rayon-m) - 3px);
-    background: color-mix(in oklch, var(--fond) 9%, transparent);
-    white-space: nowrap;
-  }
-  .depart__case--titre {
-    background: var(--accent);
-    color: var(--sur-accent);
-    font-weight: 750;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.75rem;
-  }
-  .depart__voyant {
-    inline-size: 0.5rem;
-    block-size: 0.5rem;
+  .disponible__point {
+    flex: none;
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
     border-radius: 50%;
-    background: currentColor;
-    animation: voyant 1.6s steps(2, jump-none) infinite;
+    background: #1f9d55;
+    transform: translateY(-0.05em);
   }
-  @keyframes voyant {
-    50% {
-      opacity: 0.25;
-    }
-  }
-  .depart__case--jours {
-    padding: 0.3rem 0.4rem;
-    background: none;
-  }
-  /* Volets : chaque caractère bascule comme sur un tableau d'affichage à palettes */
-  .depart__volets {
-    display: inline-flex;
-    gap: 2px;
-    perspective: 20rem;
-  }
-  .depart__volets b {
-    position: relative;
-    display: grid;
-    place-items: center;
-    min-inline-size: 1.35em;
-    padding: 0.32em 0.2em;
-    border-radius: 0.25em;
-    background: color-mix(in oklch, var(--fond) 16%, transparent);
-    font-family: var(--f-mono);
-    font-size: 1.0625rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    animation: volet 0.6s var(--sortie) calc(var(--i) * 0.07s + 0.9s) both;
-    transform-origin: 50% 0;
-    backface-visibility: hidden;
-  }
-  .depart__volets b::after {
-    content: '';
-    position: absolute;
-    inset: 50% 0 auto;
-    block-size: 1px;
-    background: color-mix(in oklch, var(--encre) 70%, transparent);
-  }
-  @keyframes volet {
-    from {
-      transform: rotateX(-88deg);
-      opacity: 0;
-    }
+  .disponible__jours {
+    font-weight: 500;
+    color: var(--encre-2);
+    white-space: nowrap;
   }
 
   .hero__actions {
@@ -394,11 +310,6 @@ const cvPdf = url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mam
     }
     .hero__mots span:not(:nth-last-child(2))::after {
       content: ' ·';
-    }
-  }
-  @media print {
-    .hero__fond {
-      display: none;
     }
   }
 </style>

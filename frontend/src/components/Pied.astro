@@ -16,17 +16,12 @@ const { langue: l } = Astro.props;
 const maj = new Intl.DateTimeFormat(l === 'fr' ? 'fr-FR' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
   new Date(`${profil.miseAJour}-01T00:00:00Z`),
 );
-const heureInitiale = new Intl.DateTimeFormat(l === 'fr' ? 'fr-FR' : 'en-GB', {
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: profil.localisation.fuseau,
-}).format(new Date());
 
 const rappel = {
   fr: `Stage de ${stage.semaines} semaines · ${dateLongue(stage.debut, 'fr')} → ${dateLongue(stage.fin, 'fr')}`,
   en: `${stage.semaines}-week internship · ${dateLongue(stage.debut, 'en')} → ${dateLongue(stage.fin, 'en')}`,
 };
-const { marseille, arles, fuseau } = profil.localisation;
+const { marseille, arles } = profil.localisation;
 ---
 
 <footer class="pied">
@@ -38,11 +33,6 @@ const { marseille, arles, fuseau } = profil.localisation;
           <span class="puce puce--accent">
             <Icone nom="lieu" taille={14} />
             {ui.pied.localisationEtiquette[l]}
-          </span>
-          <span class="loc__horloge" data-horloge-fuseau={fuseau} data-horloge-langue={l}>
-            <span class="loc__voyant" aria-hidden="true"></span>
-            <Icone nom="horloge" taille={14} />
-            <span>{ui.pied.heureLocale[l]} · <strong data-horloge-texte>{heureInitiale}</strong> CET</span>
           </span>
         </div>
 
@@ -64,7 +54,6 @@ const { marseille, arles, fuseau } = profil.localisation;
                 <span class="loc__point-etat" aria-hidden="true"></span>
                 <span class="etiquette">{ui.pied.domicile[l]}</span>
               </button>
-              <code class="loc__gps">{marseille.coordonnees}</code>
             </div>
             <div class="loc__actions">
               <a class="bouton bouton--compact" href={marseille.maps} target="_blank" rel="noopener">
@@ -72,10 +61,6 @@ const { marseille, arles, fuseau } = profil.localisation;
                 {ui.pied.ouvrirMaps[l]}
                 <span class="cache-visuel"> — {marseille.nom} {ui.commun.nouvelOnglet[l]}</span>
                 <Icone nom="fleche-sortie" taille={15} />
-              </a>
-              <a class="lien loc__osm" href={marseille.osm} target="_blank" rel="noopener">
-                {ui.pied.ouvrirOsm[l]}
-                <span class="cache-visuel"> — {marseille.nom} {ui.commun.nouvelOnglet[l]}</span>
               </a>
             </div>
           </div>
@@ -94,7 +79,6 @@ const { marseille, arles, fuseau } = profil.localisation;
                 <span class="loc__point-etat" aria-hidden="true"></span>
                 <span class="etiquette">{ui.pied.campus[l]}</span>
               </button>
-              <code class="loc__gps">{arles.coordonnees}</code>
             </div>
             <div class="loc__actions">
               <a class="bouton bouton--compact bouton--contour" href={arles.maps} target="_blank" rel="noopener">
@@ -102,10 +86,6 @@ const { marseille, arles, fuseau } = profil.localisation;
                 {ui.pied.ouvrirMaps[l]}
                 <span class="cache-visuel"> — {arles.nom} {ui.commun.nouvelOnglet[l]}</span>
                 <Icone nom="fleche-sortie" taille={15} />
-              </a>
-              <a class="lien loc__osm" href={arles.osm} target="_blank" rel="noopener">
-                {ui.pied.ouvrirOsm[l]}
-                <span class="cache-visuel"> — {arles.nom} {ui.commun.nouvelOnglet[l]}</span>
               </a>
             </div>
           </div>

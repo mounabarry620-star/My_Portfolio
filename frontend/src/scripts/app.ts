@@ -239,23 +239,6 @@ function initialiserPalette() {
 }
 
 /* ------------------------------- Heure locale en direct (Marseille / Paris) */
-function initialiserHorloge() {
-  const conteneur = $<HTMLElement>('[data-horloge-fuseau]');
-  const affichage = $<HTMLElement>('[data-horloge-texte]', conteneur ?? document);
-  if (!conteneur || !affichage) return;
-  const fuseau = conteneur.dataset.horlogeFuseau ?? 'Europe/Paris';
-  const region = conteneur.dataset.horlogeLangue === 'en' ? 'en-GB' : 'fr-FR';
-  const format = new Intl.DateTimeFormat(region, {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: fuseau,
-  });
-  const maj = () => {
-    affichage.textContent = format.format(new Date());
-  };
-  maj();
-  setInterval(maj, 30_000);
-}
 
 /* ------------------ Sélecteur de lieu sur la carte OpenStreetMap en pied de page */
 function initialiserCarteOsm() {
@@ -373,7 +356,6 @@ initialiserApparitions();
 initialiserCopie();
 initialiserOutils();
 initialiserPalette();
-initialiserHorloge();
 initialiserCarteOsm();
 initialiserVisionneuse();
 initialiserAssistant();

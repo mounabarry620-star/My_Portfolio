@@ -91,10 +91,9 @@ export const ui = {
         en: 'Software and web development: C++, Python, Java, JavaScript, TypeScript, SQL. Second year of a BUT in Computer Science, “Application development: design, development, validation” track.',
       },
     },
-    departLabel: { fr: 'Prochain départ', en: 'Next departure' },
-    departObjet: { fr: 'Stage · 12 semaines', en: 'Internship · 12 weeks' },
-    jours: { fr: 'J-', en: 'D-' },
-    joursAria: { fr: 'jours avant le début du stage', en: 'days until the internship starts' },
+    disponible: { fr: 'Disponible pour un stage de 12 semaines à partir du', en: 'Available for a 12-week internship from' },
+    dans: { fr: 'dans', en: 'in' },
+    jours: { fr: 'jours', en: 'days' },
     voirProjets: { fr: 'Voir mes projets', en: 'See my projects' },
     telechargerCv: { fr: 'Télécharger mon CV', en: 'Download my CV' },
     contacter: { fr: 'Me contacter', en: 'Contact me' },
@@ -105,58 +104,24 @@ export const ui = {
   },
 
   billet: {
-    titre: { fr: 'Billet de stage', en: 'Internship ticket' },
-    ref: { fr: 'Réf.', en: 'Ref.' },
-    de: { fr: 'De', en: 'From' },
-    vers: { fr: 'Vers', en: 'To' },
-    origine: { fr: "IUT d'Arles", en: 'IUT Arles' },
-    origineNote: { fr: 'BUT Informatique, 2e année', en: 'BUT Computer Science, year 2' },
-    destination: { fr: 'Votre équipe', en: 'Your team' },
-    destinationNote: { fr: 'Entreprise ou administration', en: 'Company or public body' },
-    depart: { fr: 'Départ', en: 'Departure' },
-    arrivee: { fr: 'Arrivée', en: 'Arrival' },
-    duree: { fr: 'Durée', en: 'Duration' },
+    cherche: { fr: 'Je recherche', en: "I'm looking for" },
+    stageDe: { fr: 'Un stage de développeur logiciel et web', en: 'A software and web developer internship' },
+    dates: { fr: 'Dates', en: 'Dates' },
     semaines: { fr: '12 semaines', en: '12 weeks' },
-    poste: { fr: 'Poste', en: 'Role' },
-    posteValeur: { fr: 'Développeur logiciel et web', en: 'Software and web developer' },
-    rythme: { fr: 'Rythme', en: 'Schedule' },
     rythmeValeur: { fr: 'Temps plein', en: 'Full time' },
-    option: { fr: 'Option', en: 'Option' },
-    optionValeur: { fr: "Prolongeable jusqu'à fin août 2027", en: 'Can be extended to end of August 2027' },
-    mobilite: { fr: 'Mobilité', en: 'Mobility' },
+    option: { fr: 'Prolongation', en: 'Extension' },
+    optionValeur: { fr: "Possible jusqu'à fin août 2027", en: 'Possible until the end of August 2027' },
+    mobilite: { fr: 'Où', en: 'Where' },
     mobiliteValeur: {
-      fr: "Marseille · Provence-Alpes-Côte d'Azur · France",
-      en: "Marseille · Provence-Alpes-Côte d'Azur · France",
+      fr: "Marseille, toute la région Provence-Alpes-Côte d'Azur, ou ailleurs en France",
+      en: "Marseille, anywhere in Provence-Alpes-Côte d'Azur, or elsewhere in France",
     },
-    qr: { fr: 'Scannez pour ouvrir mon CV', en: 'Scan to open my CV' },
-    badge: {
-      fr: 'Disponible · stage 2027 · 12 semaines · ',
-      en: 'Available · 2027 internship · 12 weeks · ',
-    },
-    composter: {
-      fr: 'Composter le billet et valider ma disponibilité',
-      en: 'Stamp ticket and confirm availability',
-    },
-    tamponTitre: {
-      fr: 'COMPOSTÉ · DISPONIBLE',
-      en: 'STAMPED · AVAILABLE',
-    },
-    tamponSousTitre: {
-      fr: '29 MARS → 18 JUIN 2027 · PRÊT AU DÉPART',
-      en: '29 MAR → 18 JUN 2027 · READY TO BOARD',
-    },
-    voirCarte: {
-      fr: 'Ouvrir sur Google Maps',
-      en: 'Open on Google Maps',
-    },
-    aria: {
-      fr: 'Recherche de stage : 12 semaines, du 29 mars au 18 juin 2027, à temps plein, en développement logiciel et web.',
-      en: 'Internship search: 12 weeks, 29 March to 18 June 2027, full time, software and web development.',
-    },
+    voirCv: { fr: 'Voir mon CV', en: 'See my CV' },
+    qr: { fr: 'ou scannez le code avec votre téléphone', en: 'or scan the code with your phone' },
   },
 
   particularites: {
-    etiquette: { fr: 'Particularités', en: 'What sets me apart' },
+    etiquette: { fr: 'Profil', en: 'Profile' },
     titre: { fr: 'Ce qui me distingue', en: 'What makes me different' },
     intro: {
       fr: 'Trois faits qui résument mon profil.',
@@ -165,7 +130,7 @@ export const ui = {
   },
 
   projets: {
-    etiquette: { fr: 'Preuves', en: 'Evidence' },
+    etiquette: { fr: 'Projets', en: 'Projects' },
     titre: { fr: "Ce que j'ai réalisé", en: 'What I have built' },
     intro: {
       fr: "Des projets menés en équipe ou seul, à l'IUT et en dehors. Chaque fiche explique le besoin, mon rôle et le résultat.",
@@ -231,7 +196,7 @@ export const ui = {
   },
 
   atouts: {
-    etiquette: { fr: 'Profits', en: 'Benefits' },
+    etiquette: { fr: 'Atouts', en: 'Strengths' },
     titre: { fr: "Ce que j'apporte à votre équipe", en: 'What I bring to your team' },
     intro: {
       fr: "Quatre points concrets, chacun appuyé sur un fait.",
@@ -242,7 +207,7 @@ export const ui = {
   },
 
   contact: {
-    etiquette: { fr: 'Terminus', en: 'Last stop' },
+    etiquette: { fr: 'Contact', en: 'Contact' },
     titre: { fr: 'Parlons de votre stage', en: "Let's talk about your internship" },
     texte: {
       fr: 'Je recherche un stage conventionné de 12 semaines, du 29 mars au 18 juin 2027, en développement logiciel ou web.',

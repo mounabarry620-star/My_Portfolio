@@ -15,6 +15,7 @@ import Contact from './sections/Contact.astro';
 import { routes, type Langue } from '@/i18n';
 import { ui } from '@/i18n/ui';
 import { profil, stage } from '@/data/profil';
+import { cv } from '@/data/cv';
 
 interface Props {
   langue: Langue;
@@ -31,7 +32,7 @@ const personne = {
   familyName: profil.nom,
   url: new URL(routes.accueil(l), Astro.site).href,
   email: `mailto:${profil.email}`,
-  jobTitle: ui.billet.posteValeur[l],
+  jobTitle: cv.titre[l],
   description: ui.meta.description[l],
   address: { '@type': 'PostalAddress', addressLocality: profil.ville, addressCountry: 'FR' },
   alumniOf: { '@type': 'CollegeOrUniversity', name: "IUT d'Aix-Marseille, site d'Arles" },

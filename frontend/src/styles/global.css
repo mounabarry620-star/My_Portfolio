@@ -584,6 +584,45 @@
     color: var(--encre-2);
   }
 
+  /* ------------------------------------------------------------------
+     Écrans tactiles : toute zone à toucher fait au moins 44 px de haut
+     (recommandation d'accessibilité), sans changer la version ordinateur.
+     ------------------------------------------------------------------ */
+  @media (pointer: coarse) {
+    .lien,
+    .marque,
+    .lecture button,
+    .pied__liens a,
+    .loc__cible,
+    .loc__onglets button,
+    [data-changer-carte],
+    .comp__preuves a,
+    .fiche__comps a,
+    .contact__courriel,
+    .billet__cv,
+    .puce.outil {
+      min-block-size: 44px;
+    }
+    .lien,
+    .comp__preuves a,
+    .fiche__comps a,
+    .pied__liens a,
+    .loc__cible {
+      display: inline-flex;
+      align-items: center;
+    }
+    .marque {
+      min-inline-size: 44px;
+    }
+    .lecture button {
+      padding-inline: 1rem;
+    }
+    .pied__liens a {
+      min-inline-size: 44px;
+      justify-content: center;
+    }
+  }
+
   /* Sections */
   .section {
     padding-block: var(--section);

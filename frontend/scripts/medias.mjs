@@ -87,7 +87,7 @@ try {
     for (const l of ['fr', 'en']) {
       await ouvrir(`${l === 'fr' ? '/' : '/en/'}?theme=arles&lecture=simple`, 1200, 630);
       await page.addStyleTag({ content: `
-        .entete, .evitement, .hero__accroche, .hero__actions, .depart__case--jours { display: none !important; }
+        .entete, .evitement, .hero__accroche, .hero__actions, .assistant, .disponible__jours { display: none !important; }
         .hero { min-block-size: 630px !important; block-size: 630px; padding-block: 0 !important; }
         .hero__grille { align-items: center; width: calc(100% - 144px) !important; grid-template-columns: minmax(0, 1fr) 330px !important; gap: 56px !important; }
         .hero__billet { zoom: 0.72; }
