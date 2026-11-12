@@ -45,17 +45,22 @@
   "redirects": [
     {
       "source": "/cv/fr",
-      "destination": "/cv/",
+      "destination": "https://portfolio-mamadou-bailo-barry.mounabarry620.workers.dev/cv/",
       "permanent": true
     },
     {
       "source": "/cv/en",
-      "destination": "/en/cv/",
+      "destination": "https://portfolio-mamadou-bailo-barry.mounabarry620.workers.dev/en/cv/",
       "permanent": true
     },
     {
       "source": "/personal",
-      "destination": "/",
+      "destination": "https://portfolio-mamadou-bailo-barry.mounabarry620.workers.dev/",
+      "permanent": true
+    },
+    {
+      "source": "/:chemin*",
+      "destination": "https://portfolio-mamadou-bailo-barry.mounabarry620.workers.dev/:chemin*",
       "permanent": true
     }
   ]

@@ -3,6 +3,7 @@
  * le site reste lisible et navigable (liens, contenus, CV).
  */
 import { changerLecture, changerTheme, initialiserPreferences, type Lecture, type Theme } from './preferences';
+import { initialiserAssistant } from './assistant';
 
 const $ = <T extends Element = HTMLElement>(sel: string, racine: ParentNode = document) => racine.querySelector<T>(sel);
 const $$ = <T extends Element = HTMLElement>(sel: string, racine: ParentNode = document) => [
@@ -176,6 +177,14 @@ function initialiserPalette() {
     palette.close();
     if (action === 'theme') return changerTheme(valeur as Theme, { x: innerWidth / 2, y: innerHeight / 3 });
     if (action === 'lecture') return changerLecture(valeur as Lecture);
+    if (action === 'assistant') {
+      const btn = Object.assign(document.createElement('button'), { hidden: true });
+      btn.dataset.ouvrirAssistant = valeur ?? 'chat';
+      document.body.appendChild(btn);
+      btn.click();
+      btn.remove();
+      return;
+    }
     if (action === 'copier') {
       const adresse = $<HTMLElement>('[data-copier]')?.dataset.copier ?? document.documentElement.dataset.courriel;
       if (adresse) await copier(adresse);
@@ -271,9 +280,69 @@ function initialiserCarteOsm() {
   });
 }
 
+/* ---------------- Visionneuse plein écran sur les galeries de projets */
+function initialiserVisionneuse() {
+  const section = $<HTMLElement>('[data-galerie-projet]');
+  const dialogue = $<HTMLDialogElement>('[data-visionneuse]', section ?? document);
+  if (!section || !dialogue) return;
+
+  const declencheurs = $$<HTMLButtonElement>('[data-ouvrir-visionneuse]', section);
+  const imgCible = $<HTMLImageElement>('[data-visionneuse-img]', dialogue);
+  const legendeCible = $<HTMLElement>('[data-visionneuse-legende]', dialogue);
+  const compteurCible = $<HTMLElement>('[data-visionneuse-compteur]', dialogue);
+  const btnFermer = $<HTMLButtonElement>('[data-visionneuse-fermer]', dialogue);
+  const btnPrec = $<HTMLButtonElement>('[data-visionneuse-prec]', dialogue);
+  const btnSuiv = $<HTMLButtonElement>('[data-visionneuse-suiv]', dialogue);
+
+  if (!declencheurs.length || !imgCible) return;
+  let indexCourant = 0;
+
+  const afficher = (idx: number) => {
+    indexCourant = (idx + declencheurs.length) % declencheurs.length;
+    const btn = declencheurs[indexCourant];
+    const imgSource = $<HTMLImageElement>('img', btn);
+    if (!btn || !imgSource) return;
+
+    imgCible.src = imgSource.currentSrc || imgSource.src;
+    imgCible.alt = imgSource.alt;
+    if (legendeCible) legendeCible.textContent = btn.dataset.legende ?? imgSource.alt;
+    if (compteurCible) compteurCible.textContent = `${indexCourant + 1} / ${declencheurs.length}`;
+  };
+
+  declencheurs.forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      afficher(i);
+      dialogue.showModal();
+    });
+  });
+
+  btnFermer?.addEventListener('click', () => dialogue.close());
+  btnPrec?.addEventListener('click', () => afficher(indexCourant - 1));
+  btnSuiv?.addEventListener('click', () => afficher(indexCourant + 1));
+
+  dialogue.addEventListener('click', (e) => {
+    if (e.target === dialogue) dialogue.close();
+  });
+
+  dialogue.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      afficher(indexCourant - 1);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      afficher(indexCourant + 1);
+    }
+  });
+}
+
 /* ------------------------------------ Mode hors connexion (service worker) */
 function initialiserHorsConnexion() {
-  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator)) return;
+  if (!import.meta.env.PROD) {
+    // En mode développement (npm run dev), on désactive tout ancien service worker en cache
+    navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister())).catch(() => {});
+    return;
+  }
   const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
   addEventListener('load', () => {
     navigator.serviceWorker.register(`${base}/sw.js`, { scope: `${base}/` }).catch(() => {
@@ -291,4 +360,6 @@ initialiserOutils();
 initialiserPalette();
 initialiserHorloge();
 initialiserCarteOsm();
+initialiserVisionneuse();
+initialiserAssistant();
 initialiserHorsConnexion();

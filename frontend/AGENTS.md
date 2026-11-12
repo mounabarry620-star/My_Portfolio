@@ -46,3 +46,12 @@ Ne pas écrire de texte en dur dans les composants.
 - Vie privée : pas de traceur, pas de police ou de script chargés depuis un autre site,
   pas d'adresse postale. Ne pas publier le nom d'autres personnes sans leur accord.
 - Accessibilité : viser 100 à l'audit Lighthouse ; contrastes AA dans les quatre thèmes.
+
+## Assistant IA et Cloudflare
+
+- Serveur : `worker/index.js` (Worker Cloudflare, `wrangler.toml`). La clé `GEMINI_API_KEY`
+  ne doit JAMAIS apparaître côté navigateur ni être demandée au visiteur.
+- Connaissances de l'assistant : générées depuis `src/data/` par `src/data/assistant.ts`.
+  Ne pas écrire de faits à la main dans une consigne.
+- Vérifier les noms de modèles Gemini avant de les changer (liste : GET /v1beta/models).
+- Test local : `npm run cf:dev`. Mise en ligne : `npm run cf:deploy`.

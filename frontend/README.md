@@ -3,7 +3,7 @@
 Site personnel : qui je suis, ce que je cherche (un stage du 29 mars au 18 juin 2027),
 mes projets, mes compétences et mon CV. En français et en anglais.
 
-- **En ligne** : <https://portfolio-1-gamma-azure.vercel.app>
+- **En ligne** : <https://portfolio-mamadou-bailo-barry.mounabarry620.workers.dev> (Cloudflare). L'ancienne adresse Vercel redirige vers celle-ci.
 - **Version 1** (1re année, Next.js) : dans l'historique Git, avant la branche `refonte-2026`.
 
 ## Lancer le site sur son ordinateur
@@ -97,9 +97,60 @@ public/         fichiers copiés tels quels : icônes, CV en PDF, images de part
 scripts/        outil pour fabriquer les PDF du CV
 ```
 
-## Mise en ligne
+## Assistant IA (chat écrit et voix)
 
-Le site est déployé par Vercel à chaque `git push` sur la branche `main`. Dans les réglages
-du projet Vercel, le dossier racine (« Root Directory ») doit être `frontend`. Le fichier
-`vercel.json` indique à Vercel qu'il s'agit d'un site Astro. Le résultat (`dist/`) est un simple dossier de fichiers : il fonctionne chez
-n'importe quel hébergeur statique.
+Un bouton « Parler à mon IA » ouvre un panneau : le visiteur écrit une question, ou parle au
+micro (conversation en temps réel avec Gemini Live). Inspiré de l'assistant vocal du
+portfolio d'Aldo Alex Nganji (github.com/Bakame03/portfolioX).
+
+- **Ce que l'assistant sait** est fabriqué automatiquement à partir de `src/data/` (voir
+  `src/data/assistant.ts`) et publié dans `/assistant/connaissances.txt`. Il ne peut donc pas
+  raconter autre chose que le site. Les règles de comportement sont en haut de ce fichier.
+- **La clé Gemini reste sur le serveur** (`worker/index.js`). Le chat passe par `/api/chat` ;
+  la voix demande à `/api/voix` un jeton à usage unique de 5 minutes, avec la consigne
+  verrouillée dedans, puis le navigateur parle directement à Gemini.
+- **Protections** : même origine que le site, 15 questions et 4 conversations vocales par
+  minute et par adresse IP, messages limités à 600 caractères, et anti-robot Turnstile si on
+  le configure (facultatif, voir plus bas).
+- Si un modèle Gemini est saturé, le serveur passe automatiquement à un autre
+  (`gemini-3.8-flash`, puis `gemini-3.5-flash-lite`, puis `gemini-3.1-flash-lite`).
+- `npm run dev` n'a pas de serveur : l'assistant répond qu'il ne marche que sur le site en
+  ligne. Pour le tester en local : `npm run cf:dev` (il faut `GEMINI_API_KEY` dans `.env`),
+  puis ouvrir http://localhost:8787.
+
+## Hébergement sur Cloudflare
+
+Un seul Worker Cloudflare sert le site (dossier `dist/`) et l'assistant (`worker/index.js`).
+Configuration : `wrangler.toml`. Offre gratuite suffisante.
+
+**Première fois** (dans le dossier `frontend`) :
+
+```bash
+npx wrangler login                      # ouvre le navigateur pour te connecter à Cloudflare
+npx wrangler secret put GEMINI_API_KEY  # colle ta clé quand on te la demande (elle n'est pas affichée)
+npm run cf:deploy                       # construit tout puis met en ligne
+```
+
+À la fin, Wrangler affiche l'adresse du site, du type
+`https://portfolio-mamadou-bailo-barry.<ton-sous-domaine>.workers.dev`.
+
+**Ensuite**, pour que le QR code, le plan du site et les aperçus de partage pointent vers
+cette adresse, remplace l'adresse par défaut dans `astro.config.mjs` (`const site = …`), puis
+relance `npm run cf:deploy`.
+
+**Anti-robot Turnstile (recommandé si le site est très partagé)** : dans le tableau de bord
+Cloudflare → Turnstile → « Add widget » pour ton adresse. Puis :
+
+```bash
+npx wrangler secret put TURNSTILE_SECRET        # la clé secrète du widget
+PUBLIC_TURNSTILE_SITEKEY=<clé publique> npm run cf:deploy
+```
+
+Sans Turnstile, la limite par adresse IP reste active.
+
+## Ancienne adresse (Vercel)
+
+Le site était hébergé sur Vercel jusqu'en novembre 2026. Le fichier `vercel.json` redirige
+désormais chaque adresse `portfolio-1-gamma-azure.vercel.app/…` vers la même page sur
+Cloudflare, pour que les CV, lettres et QR codes déjà envoyés continuent de fonctionner.
+Il faut que le dépôt GitHub soit à jour (`git push`) pour que Vercel applique ces redirections.

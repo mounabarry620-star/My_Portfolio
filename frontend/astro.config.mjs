@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, fontProviders } from 'astro/config';
 
 // Adresse publique du site (sert aux liens absolus : partage, plan du site, QR code du CV).
-const site = process.env.SITE_URL ?? 'https://portfolio-1-gamma-azure.vercel.app';
+const site = process.env.SITE_URL ?? 'https://portfolio-mamadou-bailo-barry.mounabarry620.workers.dev';
 // Sous-dossier éventuel (ex. "/My_Portfolio" sur GitHub Pages). À la racine sur Vercel.
 const base = process.env.BASE_PATH ?? '/';
 

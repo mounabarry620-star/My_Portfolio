@@ -8,6 +8,7 @@ import { Font, fontData } from 'astro:assets';
 import Entete from '@/components/Entete.astro';
 import Pied from '@/components/Pied.astro';
 import Palette from '@/components/Palette.astro';
+import AssistantIA from '@/components/AssistantIA.astro';
 import { ui } from '@/i18n/ui';
 import { codesHtml, codesOg, langues, url, type Langue } from '@/i18n';
 import { profil } from '@/data/profil';
@@ -150,6 +151,7 @@ const regles = JSON.stringify({
       <slot />
     </main>
     {!nu && <Pied langue={l} />}
+    {!nu && <AssistantIA langue={l} />}
     <Palette langue={l} autreLangue={autreLangue} surAccueil={surAccueil} />
     <script>
       import '@/scripts/app.ts';

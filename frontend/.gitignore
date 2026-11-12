@@ -17,3 +17,7 @@ dist/
 .DS_Store
 *.log
 *:Zone.Identifier
+
+# secrets Cloudflare en local
+.dev.vars
+.wrangler/

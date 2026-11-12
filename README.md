@@ -3,7 +3,7 @@
 Étudiant en 2e année de BUT Informatique à l'IUT d'Aix-Marseille (site d'Arles).
 Je recherche un stage de 12 semaines en développement logiciel et web, du 29 mars au 18 juin 2027.
 
-**Site en ligne : <https://portfolio-1-gamma-azure.vercel.app>**
+**Site en ligne : <https://portfolio-mamadou-bailo-barry.mounabarry620.workers.dev>** (hébergé sur Cloudflare)
 
 ## Ce dépôt
 

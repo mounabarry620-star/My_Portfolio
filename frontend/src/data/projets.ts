@@ -21,7 +21,9 @@ import hypoxiaScene from '@/assets/projets/hypoxia-scene.webp';
 import hypoxiaAccueil from '@/assets/projets/hypoxia-accueil.webp';
 import devartEquipe from '@/assets/projets/devart-equipe.jpg';
 import devartPrix from '@/assets/projets/devart-prix.jpg';
+import devartStand from '@/assets/projets/devart-stand.jpg';
 import devartTravail from '@/assets/projets/devart-travail.jpg';
+import devartAffiche from '@/assets/projets/devart-affiche.jpg';
 import parcoursupCarte from '@/assets/projets/parcoursup-carte.webp';
 import parcoursupHistorique from '@/assets/projets/parcoursup-historique.webp';
 import parcoursupSombre from '@/assets/projets/parcoursup-sombre.webp';
@@ -348,6 +350,28 @@ export const projets: Projet[] = [
           en: 'The team working on their laptops during the hackathon',
         },
         legende: { fr: 'Pendant les deux jours de développement.', en: 'During the two days of development.' },
+      },
+      {
+        image: devartStand,
+        alt: {
+          fr: "La table de l'équipe <Nebula/> (Barry Mamadou Bailo, Camara Aminata Sita B, Nganji Aldo Alex, Toure Hiamou Djawad) pendant le hackathon Dev'Art 2026",
+          en: "Team <Nebula/>'s table (Barry Mamadou Bailo, Camara Aminata Sita B, Nganji Aldo Alex, Toure Hiamou Djawad) during the Dev'Art 2026 hackathon",
+        },
+        legende: {
+          fr: 'Le stand <Nebula/> : Mamadou Bailo Barry, Aminata Camara, Aldo Alex Nganji et Djawad Touré.',
+          en: 'The <Nebula/> desk: Mamadou Bailo Barry, Aminata Camara, Aldo Alex Nganji and Djawad Touré.',
+        },
+      },
+      {
+        image: devartAffiche,
+        alt: {
+          fr: "Affiche officielle du hackathon Dev'Art 2026 des 12 et 13 février 2026 à l'IUT d'Arles",
+          en: "Official poster of the Dev'Art 2026 hackathon on 12 and 13 February 2026 at IUT Arles",
+        },
+        legende: {
+          fr: "L'affiche du concours Dev'Art 2026 (12 et 13 février 2026).",
+          en: "The Dev'Art 2026 competition poster (12–13 February 2026).",
+        },
       },
     ],
     liens: [

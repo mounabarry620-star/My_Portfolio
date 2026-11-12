@@ -197,14 +197,20 @@ const realisationsTitre = p.collectif
 
     {
       p.galerie && p.galerie.length > 0 && (
-        <section class="conteneur galerie" aria-labelledby="titre-galerie">
+        <section class="conteneur galerie" aria-labelledby="titre-galerie" data-galerie-projet>
           <h2 class="titre-2" id="titre-galerie" data-revele>
             {ui.projets.images[l]}
           </h2>
           <div class="galerie__grille">
             {p.galerie.map((g, i) => (
               <figure class:list={{ 'galerie__large': i === 0 && p.galerie!.length !== 2 }} data-revele>
-                <div class="galerie__cadre">
+                <button
+                  type="button"
+                  class="galerie__cadre galerie__declencheur"
+                  data-ouvrir-visionneuse={i}
+                  data-legende={g.legende ? g.legende[l] : g.alt[l]}
+                  aria-label={`${ui.projets.agrandirImage[l]} — ${g.legende ? g.legende[l] : g.alt[l]}`}
+                >
                   <Picture
                     src={g.image}
                     alt={g.alt[l]}
@@ -216,11 +222,51 @@ const realisationsTitre = p.collectif
                     decoding="async"
                     quality={64}
                   />
-                </div>
+                  <span class="galerie__zoom" aria-hidden="true">
+                    <Icone nom="agrandir" taille={18} />
+                  </span>
+                </button>
                 {g.legende && <figcaption>{g.legende[l]}</figcaption>}
               </figure>
             ))}
           </div>
+
+          <dialog class="visionneuse" data-visionneuse aria-label={ui.projets.images[l]}>
+            <div class="visionneuse__barre">
+              <span class="visionneuse__compteur mono" data-visionneuse-compteur>
+                1 / {p.galerie.length}
+              </span>
+              <button type="button" class="visionneuse__fermer" data-visionneuse-fermer aria-label={ui.commun.fermer[l]}>
+                <Icone nom="fermer" taille={20} />
+              </button>
+            </div>
+            <div class="visionneuse__scene">
+              {p.galerie.length > 1 && (
+                <button
+                  type="button"
+                  class="visionneuse__nav visionneuse__nav--prec"
+                  data-visionneuse-prec
+                  aria-label={ui.projets.imagePrecedente[l]}
+                >
+                  <Icone nom="fleche-gauche" taille={22} />
+                </button>
+              )}
+              <figure class="visionneuse__figure">
+                <img class="visionneuse__img" data-visionneuse-img src="" alt="" />
+                <figcaption class="visionneuse__legende" data-visionneuse-legende />
+              </figure>
+              {p.galerie.length > 1 && (
+                <button
+                  type="button"
+                  class="visionneuse__nav visionneuse__nav--suiv"
+                  data-visionneuse-suiv
+                  aria-label={ui.projets.imageSuivante[l]}
+                >
+                  <Icone nom="fleche-droite" taille={22} />
+                </button>
+              )}
+            </div>
+          </dialog>
         </section>
       )
     }
@@ -471,15 +517,165 @@ const realisationsTitre = p.collectif
     align-content: start;
   }
   .galerie__cadre {
+    position: relative;
+    display: block;
+    inline-size: 100%;
+    padding: 0;
+    border: none;
     overflow: clip;
     border-radius: var(--rayon);
     background: var(--fond-2);
     box-shadow: inset 0 0 0 1px var(--trait);
+    cursor: zoom-in;
+    text-align: start;
   }
   .galerie__cadre :global(img) {
     display: block;
     inline-size: 100%;
     block-size: auto;
+    transition: transform 0.55s var(--sortie);
+  }
+  .galerie__zoom {
+    position: absolute;
+    inset: auto 0.85rem 0.85rem auto;
+    display: grid;
+    place-items: center;
+    inline-size: 2.35rem;
+    block-size: 2.35rem;
+    border-radius: 50%;
+    background: color-mix(in oklch, var(--fond) 86%, transparent);
+    backdrop-filter: blur(8px);
+    color: var(--encre);
+    box-shadow: 0 4px 14px oklch(0% 0 0 / 0.18), inset 0 0 0 1px var(--trait-fort);
+    opacity: 0.82;
+    transition:
+      transform 0.35s var(--ressort),
+      background-color 0.25s,
+      color 0.25s,
+      opacity 0.25s;
+  }
+  @media (hover: hover) {
+    .galerie__cadre:hover :global(img) {
+      transform: scale(1.022);
+    }
+    .galerie__cadre:hover .galerie__zoom {
+      opacity: 1;
+      transform: scale(1.08);
+      background: var(--accent);
+      color: var(--sur-accent);
+    }
+  }
+
+  /* Visionneuse plein écran (Lightbox native <dialog>) */
+  .visionneuse {
+    inset: 0;
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    block-size: 100dvh;
+    max-block-size: 100dvh;
+    margin: 0;
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    border: none;
+    background: color-mix(in oklch, var(--fond) 94%, black);
+    color: var(--encre);
+    backdrop-filter: blur(14px);
+  }
+  .visionneuse[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 1rem;
+  }
+  .visionneuse::backdrop {
+    background: oklch(8% 0.01 250 / 0.72);
+    backdrop-filter: blur(8px);
+  }
+  .visionneuse__barre {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .visionneuse__compteur {
+    font-size: var(--t-s);
+    font-weight: 700;
+    color: var(--encre-2);
+    padding: 0.3rem 0.7rem;
+    border-radius: 99rem;
+    background: var(--fond-2);
+    border: 1px solid var(--trait);
+  }
+  .visionneuse__fermer,
+  .visionneuse__nav {
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border-radius: 50%;
+    border: 1px solid var(--trait-fort);
+    background: var(--fond-2);
+    color: var(--encre);
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      transform 0.25s var(--ressort);
+  }
+  .visionneuse__fermer:hover,
+  .visionneuse__nav:hover {
+    background: var(--accent);
+    color: var(--sur-accent);
+    border-color: transparent;
+    transform: scale(1.06);
+  }
+  .visionneuse__scene {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+    min-block-size: 0;
+  }
+  .visionneuse__figure {
+    margin: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    justify-items: center;
+    align-items: center;
+    gap: 0.85rem;
+    block-size: 100%;
+    min-block-size: 0;
+  }
+  .visionneuse__img {
+    max-inline-size: 100%;
+    max-block-size: calc(100dvh - 8.5rem);
+    inline-size: auto;
+    block-size: auto;
+    object-fit: contain;
+    border-radius: var(--rayon-m);
+    box-shadow: 0 22px 55px oklch(0% 0 0 / 0.35);
+  }
+  .visionneuse__legende {
+    font-size: var(--t-s);
+    color: var(--encre-2);
+    text-align: center;
+    max-inline-size: 48rem;
+  }
+  @media (max-width: 42em) {
+    .visionneuse__scene {
+      grid-template-columns: 1fr;
+    }
+    .visionneuse__nav {
+      position: absolute;
+      inset-block-start: 50%;
+      translate: 0 -50%;
+      z-index: 2;
+    }
+    .visionneuse__nav--prec {
+      inset-inline-start: 0.35rem;
+    }
+    .visionneuse__nav--suiv {
+      inset-inline-end: 0.35rem;
+    }
   }
   .galerie figcaption {
     font-size: var(--t-s);

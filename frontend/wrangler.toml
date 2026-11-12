@@ -1,0 +1,35 @@
+# Hébergement Cloudflare : un seul Worker sert le site (dossier dist/) et l'assistant IA.
+#
+#   Première fois :  npx wrangler login
+#                    npx wrangler secret put GEMINI_API_KEY
+#   Mise en ligne  :  npm run cf:deploy
+#   Test en local  :  npm run cf:dev   (lit la clé dans le fichier .dev.vars)
+name = "portfolio-mamadou-bailo-barry"
+main = "worker/index.js"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+preview_urls = false
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+# Le Worker ne s'exécute que pour /api/* : les pages du site sont servies directement.
+run_worker_first = ["/api/*"]
+
+[vars]
+# Autres adresses autorisées à appeler l'API (en plus de l'adresse du Worker lui-même),
+# séparées par des virgules. Exemple : un nom de domaine personnel.
+ORIGINES_AUTORISEES = ""
+
+# Limites par adresse IP (chaque jeton vocal = une conversation de 5 minutes au plus).
+[[ratelimits]]
+name = "LIMITE_CHAT"
+namespace_id = "2001"
+simple = { limit = 15, period = 60 }
+
+[[ratelimits]]
+name = "LIMITE_VOIX"
+namespace_id = "2002"
+simple = { limit = 4, period = 60 }

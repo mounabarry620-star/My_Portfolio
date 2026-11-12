@@ -46,6 +46,20 @@ const commandes: Commande[] = [
   { groupe: ui.palette.reglages[l], libelle: ui.palette.lectureSimple[l], action: 'lecture', valeur: 'simple' },
   { groupe: ui.palette.reglages[l], libelle: ui.palette.lectureTechnique[l], action: 'lecture', valeur: 'technique' },
   { groupe: ui.palette.reglages[l], libelle: ui.palette.passerEn[l], href: autreLangue.href, action: 'langue' },
+  {
+    groupe: ui.palette.actions[l],
+    libelle: ui.palette.ouvrirAssistant[l],
+    note: 'Gemini',
+    action: 'assistant',
+    valeur: 'chat',
+  },
+  {
+    groupe: ui.palette.actions[l],
+    libelle: ui.palette.ouvrirAssistantVoix[l],
+    note: 'Gemini Live',
+    action: 'assistant',
+    valeur: 'voix',
+  },
   { groupe: ui.palette.actions[l], libelle: ui.palette.copierMail[l], action: 'copier' },
   {
     groupe: ui.palette.actions[l],

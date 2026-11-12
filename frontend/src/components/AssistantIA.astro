@@ -1,0 +1,456 @@
+---
+/**
+ * Assistant IA du portfolio : bouton flottant + panneau de conversation.
+ * - Écrire une question → réponse de Gemini affichée au fur et à mesure (/api/chat).
+ * - Bouton micro → conversation vocale en temps réel avec Gemini Live (/api/voix).
+ * Le serveur (worker/index.js) garde la clé d'API ; ce composant n'en contient aucune.
+ * Sans JavaScript, le bouton reste masqué : le reste du site fonctionne normalement.
+ */
+import Icone from './Icone.astro';
+import { ui } from '@/i18n/ui';
+import type { Langue } from '@/i18n';
+import { suggestions } from '@/data/assistant';
+
+interface Props {
+  langue: Langue;
+}
+const { langue: l } = Astro.props;
+const a = ui.assistant;
+const textes = {
+  vous: a.vous[l],
+  ia: a.ia[l],
+  reflexion: a.reflexion[l],
+  connexion: a.connexion[l],
+  ecoute: a.ecoute[l],
+  parle: a.parle[l],
+  fin: a.fin[l],
+  micro: a.micro[l],
+  microStop: a.microStop[l],
+  reseau: a.erreurs.reseau[l],
+  limite: a.erreurs.limite[l],
+  erreurMicro: a.erreurs.micro[l],
+  robot: a.erreurs.robot[l],
+  navigateur: a.erreurs.navigateur[l],
+  horsLigne: a.erreurs.horsLigne[l],
+};
+const cleTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
+---
+
+<div class="assistant" data-assistant data-etat="repos" data-langue={l} data-turnstile={cleTurnstile} data-textes={JSON.stringify(textes)}>
+  <section class="assistant__panneau" id="assistant-panneau" aria-labelledby="assistant-titre" hidden data-assistant-panneau>
+    <header class="assistant__tete">
+      <span class="assistant__pastille" aria-hidden="true"><Icone nom="ia" taille={18} /></span>
+      <div class="assistant__titres">
+        <h2 id="assistant-titre">{a.titre[l]}</h2>
+        <p>{a.sousTitre[l]}</p>
+      </div>
+      <button type="button" class="assistant__icone" data-assistant-fermer aria-label={ui.commun.fermer[l]}>
+        <Icone nom="fermer" taille={20} />
+      </button>
+    </header>
+
+    <ol class="assistant__fil" role="log" aria-live="polite" aria-label={a.titre[l]} data-assistant-fil>
+      <li class="message message--ia">
+        <span class="message__auteur">{a.ia[l]}</span>
+        <p>{a.accueil[l]}</p>
+      </li>
+    </ol>
+
+    <div class="assistant__suggestions" data-assistant-suggestions>
+      <p class="etiquette">{a.suggestions[l]}</p>
+      <ul role="list">
+        {
+          suggestions[l].map((q) => (
+            <li>
+              <button type="button" class="assistant__suggestion" data-question={q}>
+                {q}
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="assistant__consentement" data-assistant-consentement hidden>
+      <p>{a.consentement[l]}</p>
+      <div>
+        <button type="button" class="bouton bouton--compact" data-assistant-accepter>
+          <Icone nom="micro" />
+          {a.commencer[l]}
+        </button>
+        <button type="button" class="bouton bouton--compact bouton--contour" data-assistant-refuser>{a.annuler[l]}</button>
+      </div>
+    </div>
+    <div class="assistant__turnstile" data-assistant-turnstile></div>
+
+    <p class="assistant__etat" aria-live="polite" data-assistant-etat></p>
+
+    <form class="assistant__saisie" data-assistant-formulaire>
+      <label class="cache-visuel" for="assistant-champ">{a.placeholder[l]}</label>
+      <textarea id="assistant-champ" rows="1" maxlength="600" placeholder={a.placeholder[l]} data-assistant-champ></textarea>
+      <button type="button" class="assistant__micro" data-assistant-micro aria-pressed="false" aria-label={a.micro[l]} title={a.micro[l]}>
+        <span class="assistant__ondes" aria-hidden="true"></span>
+        <Icone nom="micro" taille={20} class="icone-micro" />
+        <Icone nom="micro-coupe" taille={20} class="icone-stop" />
+      </button>
+      <button type="submit" class="assistant__envoyer" aria-label={a.envoyer[l]} title={a.envoyer[l]}>
+        <Icone nom="envoyer" taille={19} />
+      </button>
+    </form>
+    <p class="assistant__note">{a.note[l]}</p>
+  </section>
+
+  <button
+    type="button"
+    class="assistant__bouton"
+    data-ouvrir-assistant="chat"
+    aria-expanded="false"
+    aria-controls="assistant-panneau"
+  >
+    <span class="assistant__ondes" aria-hidden="true"></span>
+    <Icone nom="ia" taille={20} />
+    <span class="assistant__bouton-texte">{a.bouton[l]}</span>
+  </button>
+</div>
+
+<style>
+  .assistant {
+    --niveau: 0;
+    position: fixed;
+    inset: auto max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) auto;
+    z-index: 60;
+    display: grid;
+    justify-items: end;
+    gap: 0.75rem;
+    pointer-events: none;
+  }
+  :global(html:not(.js)) .assistant {
+    display: none;
+  }
+  .assistant > * {
+    pointer-events: auto;
+  }
+
+  /* ---- Bouton flottant ---- */
+  .assistant__bouton {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-block-size: 3.25rem;
+    padding: 0.7rem 1.15rem 0.7rem 0.95rem;
+    border-radius: 999px;
+    background: var(--encre);
+    color: var(--fond);
+    font-family: var(--f-etiquette);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    box-shadow: var(--ombre);
+    transition: transform 0.35s var(--ressort);
+  }
+  .assistant__bouton:hover {
+    transform: translateY(-2px);
+  }
+  .assistant__bouton[aria-expanded='true'] {
+    display: none;
+  }
+  @media (max-width: 30em) {
+    .assistant__bouton {
+      padding: 0;
+      inline-size: 3.25rem;
+      justify-content: center;
+    }
+    .assistant__bouton-texte {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+  }
+
+  /* Anneaux qui suivent le volume de la voix (variable --niveau, 0 à 1) */
+  .assistant__ondes {
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    border: 2px solid var(--accent);
+    opacity: calc(0.2 + var(--niveau) * 0.8);
+    transform: scale(calc(1 + var(--niveau) * 0.35));
+    transition: opacity 0.1s linear;
+    pointer-events: none;
+  }
+  .assistant[data-etat='repos'] .assistant__ondes {
+    opacity: 0;
+  }
+
+  /* ---- Panneau ---- */
+  .assistant__panneau {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto auto auto;
+    inline-size: min(25rem, calc(100vw - 2rem));
+    block-size: min(36rem, calc(100dvh - 2rem));
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon);
+    background: var(--surface);
+    color: var(--encre);
+    box-shadow: var(--ombre);
+    overflow: clip;
+    transform-origin: 100% 100%;
+    animation: ouvre 0.35s var(--sortie);
+  }
+  .assistant__panneau[hidden] {
+    display: none;
+  }
+  @keyframes ouvre {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem) scale(0.97);
+    }
+  }
+  .assistant__tete {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 0.75rem 0.85rem 1rem;
+    border-block-end: 1px solid var(--trait);
+  }
+  .assistant__pastille {
+    display: grid;
+    place-items: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    flex: none;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--sur-accent);
+  }
+  .assistant__titres {
+    flex: 1;
+    min-inline-size: 0;
+  }
+  .assistant__titres h2 {
+    font-family: var(--f-etiquette);
+    font-size: 0.9375rem;
+    font-weight: 750;
+    line-height: 1.2;
+  }
+  .assistant__titres p {
+    font-size: 0.78rem;
+    color: var(--encre-2);
+    line-height: 1.3;
+  }
+  .assistant__icone {
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border-radius: 50%;
+    color: var(--encre);
+  }
+  .assistant__icone:hover {
+    background: color-mix(in oklch, var(--encre) 9%, transparent);
+  }
+
+  /* ---- Fil de discussion ---- */
+  .assistant__fil {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 1rem;
+    list-style: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .assistant__fil :global(.message) {
+    display: grid;
+    gap: 0.2rem;
+    max-inline-size: 88%;
+  }
+  .assistant__fil :global(.message__auteur) {
+    font-family: var(--f-etiquette);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--encre-2);
+  }
+  .assistant__fil :global(.message p) {
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--rayon-m);
+    background: var(--fond-2);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+  .assistant__fil :global(.message--vous) {
+    align-self: flex-end;
+    justify-items: end;
+  }
+  .assistant__fil :global(.message--vous p) {
+    background: var(--encre);
+    color: var(--fond);
+  }
+  .assistant__fil :global(.message a) {
+    color: inherit;
+    font-weight: 650;
+  }
+  .assistant__fil :global(.message--attente p::after) {
+    content: '…';
+    display: inline-block;
+    animation: points 1.2s steps(4, jump-none) infinite;
+    inline-size: 1.2em;
+    overflow: clip;
+    vertical-align: bottom;
+  }
+  @keyframes points {
+    from {
+      inline-size: 0;
+    }
+  }
+
+  .assistant__suggestions {
+    padding: 0 1rem 0.75rem;
+  }
+  .assistant__suggestions .etiquette {
+    font-size: 0.625rem;
+    color: var(--encre-2);
+    margin-block-end: 0.4rem;
+  }
+  .assistant__suggestions ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+  }
+  .assistant__suggestion {
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--trait-fort);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    text-align: start;
+    transition: background-color 0.2s;
+  }
+  .assistant__suggestion:hover {
+    background: color-mix(in oklch, var(--accent) 22%, transparent);
+  }
+
+  .assistant__consentement {
+    display: grid;
+    gap: 0.7rem;
+    margin: 0 1rem 0.75rem;
+    padding: 0.85rem;
+    border-radius: var(--rayon-m);
+    background: var(--fond-2);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+  .assistant__consentement[hidden] {
+    display: none;
+  }
+  .assistant__consentement div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .assistant__turnstile:empty {
+    display: none;
+  }
+  .assistant__turnstile {
+    display: flex;
+    justify-content: center;
+    padding-block-end: 0.5rem;
+  }
+
+  .assistant__etat {
+    min-block-size: 0;
+    padding: 0 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent-encre);
+  }
+  .assistant__etat:empty {
+    display: none;
+  }
+
+  /* ---- Saisie ---- */
+  .assistant__saisie {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.4rem;
+    padding: 0.75rem;
+    border-block-start: 1px solid var(--trait);
+  }
+  .assistant__saisie textarea {
+    flex: 1;
+    min-inline-size: 0;
+    max-block-size: 7rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--trait-fort);
+    border-radius: 1.4rem;
+    background: var(--fond);
+    font-size: 1rem; /* 16 px : pas de zoom automatique sur iPhone */
+    line-height: 1.4;
+    resize: none;
+    field-sizing: content;
+  }
+  .assistant__saisie textarea:focus-visible {
+    outline: 2px solid var(--accent-encre);
+    outline-offset: 1px;
+  }
+  .assistant__micro,
+  .assistant__envoyer {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    flex: none;
+    border-radius: 50%;
+  }
+  .assistant__micro {
+    border: 1px solid var(--trait-fort);
+  }
+  .assistant__micro :global(.icone-stop),
+  .assistant__micro[aria-pressed='true'] :global(.icone-micro) {
+    display: none;
+  }
+  .assistant__micro[aria-pressed='true'] :global(.icone-stop) {
+    display: block;
+  }
+  .assistant__micro[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--sur-accent);
+    border-color: transparent;
+  }
+  .assistant__envoyer {
+    background: var(--encre);
+    color: var(--fond);
+  }
+  .assistant__envoyer:disabled {
+    opacity: 0.45;
+  }
+  .assistant__note {
+    padding: 0 0.9rem 0.7rem;
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    color: var(--encre-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .assistant__panneau {
+      animation: none;
+    }
+    .assistant__ondes {
+      transform: none;
+    }
+  }
+  @media print {
+    .assistant {
+      display: none;
+    }
+  }
+</style>
