@@ -1,7 +1,7 @@
 /* ==========================================================================
    Feuille de style globale
    1. Jetons (espaces, tailles, mouvements)
-   2. Thèmes : couleurs + typographie (une ambiance par lieu du parcours)
+   2. Thèmes : couleurs + typographie (bleu, sombre, clair, vert)
    3. Base (éléments HTML)
    4. Mise en page et composants partagés
    5. Mouvements : apparitions au défilement, transitions de vue
@@ -110,28 +110,100 @@
     );
     --duree: 0.7s;
 
+    /* Place laissée de chaque côté pour le menu vertical (grands écrans) */
+    --reserve-menu: 0px;
+
     /* Polices système de secours pour le code (aucun téléchargement) */
     --mono-systeme: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace;
   }
 
   /* ---------------------------------------------------------------- 2. Thèmes */
 
-  /* ARLES — jour. Papier crème, encre brune, jaune tournesol et bleu de nuit étoilée. */
+  /* BLEU (par défaut le jour) — bleu clair et blanc. */
   :root,
-  [data-theme='arles'] {
+  [data-theme='bleu'] {
     color-scheme: light;
-    --fond: oklch(96.3% 0.021 84);
-    --fond-2: oklch(93.2% 0.029 84);
-    --surface: oklch(98.7% 0.011 84);
-    --encre: oklch(23% 0.025 60);
-    --encre-2: oklch(41% 0.03 60);
-    --trait: oklch(23% 0.025 60 / 0.16);
-    --trait-fort: oklch(23% 0.025 60 / 0.42);
-    --accent: oklch(80.5% 0.152 83);
-    --sur-accent: oklch(23% 0.025 60);
-    --accent-encre: oklch(45% 0.108 58);
-    --accent-2: oklch(40% 0.108 258);
-    --ombre: 0 1px 2px oklch(23% 0.025 60 / 0.06), 0 12px 32px -12px oklch(23% 0.025 60 / 0.22);
+    --fond: oklch(97.6% 0.014 240);
+    --fond-2: oklch(94.6% 0.028 240);
+    --surface: oklch(99.6% 0.005 240);
+    --encre: oklch(25% 0.07 255);
+    --encre-2: oklch(43% 0.06 255);
+    --trait: oklch(25% 0.07 255 / 0.14);
+    --trait-fort: oklch(25% 0.07 255 / 0.4);
+    --accent: oklch(55% 0.2 256);
+    --sur-accent: oklch(99.5% 0.004 240);
+    --accent-encre: oklch(49% 0.2 258);
+    --accent-2: oklch(72% 0.12 215);
+    --ombre: 0 1px 2px oklch(25% 0.07 255 / 0.06), 0 14px 34px -14px oklch(25% 0.07 255 / 0.24);
+
+    --f-titre: var(--police-bricolage);
+    --f-texte: var(--police-bricolage);
+    --f-etiquette: var(--police-bricolage);
+    --f-mono: var(--mono-systeme);
+    --titre-graisse: 720;
+    --titre-interlettre: -0.03em;
+    --titre-hauteur: 0.95;
+    --titre-casse: none;
+    --titre-variation: 'opsz' 96, 'wdth' 88;
+    --sous-titre-graisse: 650;
+    --texte-interlettre: -0.008em;
+    --etiquette-interlettre: 0.11em;
+    --h1-echelle: 1;
+    /* Largeur, en « em », de « Mamadou Bailo » puis du nom complet dans la police de titre. */
+    --h1-rapport: 5.6;
+    --nom-rapport: 7.75;
+    --h1-max: 8.4rem;
+  }
+
+  /* SOMBRE (par défaut la nuit) — noir profond et rose-rouge. */
+  [data-theme='sombre'] {
+    color-scheme: dark;
+    --fond: oklch(14.5% 0.004 285);
+    --fond-2: oklch(17.5% 0.005 285);
+    --surface: oklch(21.5% 0.006 285);
+    --encre: oklch(96.5% 0.003 285);
+    --encre-2: oklch(77% 0.01 285);
+    --trait: oklch(96.5% 0.003 285 / 0.13);
+    --trait-fort: oklch(96.5% 0.003 285 / 0.34);
+    --accent: oklch(64% 0.235 14);
+    --sur-accent: oklch(14.5% 0.004 285);
+    --accent-encre: oklch(70% 0.2 14);
+    --accent-2: oklch(74% 0.12 230);
+    --ombre: 0 1px 2px oklch(5% 0 0 / 0.5), 0 18px 40px -16px oklch(3% 0 0 / 0.85);
+
+    --f-titre: var(--police-nunito);
+    --f-texte: var(--police-nunito);
+    --f-etiquette: var(--police-nunito);
+    --f-mono: var(--mono-systeme);
+    --titre-graisse: 800;
+    --titre-interlettre: -0.02em;
+    --titre-hauteur: 1.02;
+    --titre-casse: none;
+    --titre-variation: normal;
+    --sous-titre-graisse: 800;
+    --texte-interlettre: 0em;
+    --etiquette-interlettre: 0.12em;
+    --h1-echelle: 0.92;
+    --h1-rapport: 6.6;
+    --nom-rapport: 9.1;
+    --h1-max: 7.6rem;
+  }
+
+  /* CLAIR — noir sur blanc, rien d'autre. */
+  [data-theme='clair'] {
+    color-scheme: light;
+    --fond: oklch(100% 0 0);
+    --fond-2: oklch(96.8% 0 0);
+    --surface: oklch(100% 0 0);
+    --encre: oklch(15% 0 0);
+    --encre-2: oklch(40% 0 0);
+    --trait: oklch(15% 0 0 / 0.14);
+    --trait-fort: oklch(15% 0 0 / 0.42);
+    --accent: oklch(15% 0 0);
+    --sur-accent: oklch(100% 0 0);
+    --accent-encre: oklch(15% 0 0);
+    --accent-2: oklch(45% 0 0);
+    --ombre: 0 1px 2px oklch(15% 0 0 / 0.06), 0 12px 30px -14px oklch(15% 0 0 / 0.2);
 
     --f-titre: var(--police-fraunces);
     --f-texte: var(--police-instrument);
@@ -146,62 +218,26 @@
     --texte-interlettre: -0.004em;
     --etiquette-interlettre: 0.13em;
     --h1-echelle: 1;
-    /* Largeur, en « em », de « Mamadou Bailo » puis du nom complet dans la police de titre :
-       sert à calculer la plus grande taille qui tient dans la place disponible. */
     --h1-rapport: 5.75;
     --nom-rapport: 7.95;
     --h1-max: 8.4rem;
   }
 
-  /* MARSEILLE — mer. Blanc calcaire, bleu marine, azur et corail. */
-  [data-theme='marseille'] {
+  /* VERT — vert et bleu. */
+  [data-theme='vert'] {
     color-scheme: light;
-    --fond: oklch(97.3% 0.012 236);
-    --fond-2: oklch(94% 0.022 236);
-    --surface: oklch(99.6% 0.004 236);
-    --encre: oklch(24% 0.058 258);
-    --encre-2: oklch(42% 0.05 258);
-    --trait: oklch(24% 0.058 258 / 0.15);
-    --trait-fort: oklch(24% 0.058 258 / 0.4);
-    --accent: oklch(54% 0.205 259);
-    --sur-accent: oklch(99% 0.008 236);
-    --accent-encre: oklch(47% 0.2 259);
-    --accent-2: oklch(66% 0.185 33);
-    --ombre: 0 1px 2px oklch(24% 0.058 258 / 0.06), 0 14px 34px -14px oklch(24% 0.058 258 / 0.26);
-
-    --f-titre: var(--police-bricolage);
-    --f-texte: var(--police-bricolage);
-    --f-etiquette: var(--police-bricolage);
-    --f-mono: var(--mono-systeme);
-    --titre-graisse: 720;
-    --titre-interlettre: -0.03em;
-    --titre-hauteur: 0.92;
-    --titre-casse: none;
-    --titre-variation: 'opsz' 96, 'wdth' 88;
-    --sous-titre-graisse: 650;
-    --texte-interlettre: -0.008em;
-    --etiquette-interlettre: 0.11em;
-    --h1-echelle: 1;
-    --h1-rapport: 5.6;
-    --nom-rapport: 7.75;
-    --h1-max: 8.4rem;
-  }
-
-  /* CONAKRY — nuit. Indigo profond, crème, orange latérite et vert. */
-  [data-theme='conakry'] {
-    color-scheme: dark;
-    --fond: oklch(19.5% 0.062 285);
-    --fond-2: oklch(23.5% 0.072 285);
-    --surface: oklch(26.5% 0.078 285);
-    --encre: oklch(94.5% 0.022 85);
-    --encre-2: oklch(79% 0.04 290);
-    --trait: oklch(94.5% 0.022 85 / 0.17);
-    --trait-fort: oklch(94.5% 0.022 85 / 0.42);
-    --accent: oklch(77% 0.165 62);
-    --sur-accent: oklch(19.5% 0.062 285);
-    --accent-encre: oklch(81% 0.15 68);
-    --accent-2: oklch(76% 0.15 165);
-    --ombre: 0 1px 2px oklch(10% 0.05 285 / 0.5), 0 18px 40px -16px oklch(8% 0.05 285 / 0.85);
+    --fond: oklch(97.6% 0.018 165);
+    --fond-2: oklch(94.6% 0.034 168);
+    --surface: oklch(99.5% 0.008 165);
+    --encre: oklch(25% 0.06 225);
+    --encre-2: oklch(42% 0.05 215);
+    --trait: oklch(25% 0.06 225 / 0.15);
+    --trait-fort: oklch(25% 0.06 225 / 0.42);
+    --accent: oklch(64% 0.15 158);
+    --sur-accent: oklch(18% 0.05 225);
+    --accent-encre: oklch(45% 0.11 165);
+    --accent-2: oklch(52% 0.16 248);
+    --ombre: 0 1px 2px oklch(25% 0.06 225 / 0.06), 0 14px 34px -14px oklch(25% 0.06 225 / 0.24);
 
     --f-titre: var(--police-syne);
     --f-texte: var(--police-dmsans);
@@ -219,43 +255,6 @@
     --h1-rapport: 8.5;
     --nom-rapport: 11.5;
     --h1-max: 7rem;
-  }
-
-  /* MACHINE — terminal. Noir verdâtre, phosphore vert, ambre. Tout en chasse fixe. */
-  [data-theme='machine'] {
-    color-scheme: dark;
-    --fond: oklch(15.5% 0.012 155);
-    --fond-2: oklch(19% 0.017 155);
-    --surface: oklch(21.5% 0.021 155);
-    --encre: oklch(91% 0.045 150);
-    --encre-2: oklch(74% 0.05 150);
-    --trait: oklch(86% 0.19 148 / 0.22);
-    --trait-fort: oklch(86% 0.19 148 / 0.5);
-    --accent: oklch(86% 0.21 148);
-    --sur-accent: oklch(15.5% 0.012 155);
-    --accent-encre: oklch(86% 0.21 148);
-    --accent-2: oklch(83% 0.15 80);
-    --ombre: 0 0 0 1px oklch(86% 0.19 148 / 0.16), 0 18px 40px -16px oklch(5% 0.01 155 / 0.9);
-
-    --f-titre: var(--police-jetbrains);
-    --f-texte: var(--police-jetbrains);
-    --f-etiquette: var(--police-jetbrains);
-    --f-mono: var(--police-jetbrains);
-    --titre-graisse: 720;
-    --titre-interlettre: -0.065em;
-    --titre-hauteur: 1;
-    --titre-casse: none;
-    --titre-variation: normal;
-    --sous-titre-graisse: 700;
-    --texte-interlettre: -0.02em;
-    --etiquette-interlettre: 0.08em;
-    --h1-echelle: 0.8;
-    --h1-rapport: 7.15;
-    --nom-rapport: 10.4;
-    --h1-max: 6.9rem;
-    --rayon: 0.375rem;
-    --rayon-m: 0.25rem;
-    --rayon-s: 0.125rem;
   }
 }
 
@@ -337,7 +336,7 @@
 /* -------------------------------------------------------------- 4. Composants */
 @layer composants {
   .conteneur {
-    width: min(100% - 2 * var(--gouttiere), var(--largeur));
+    width: min(100% - 2 * var(--gouttiere) - 2 * var(--reserve-menu), var(--largeur));
     margin-inline: auto;
   }
 
@@ -384,9 +383,6 @@
     font-weight: 750;
     letter-spacing: 0;
     font-variant-numeric: tabular-nums;
-  }
-  [data-theme='machine'] .pastille {
-    border-radius: var(--rayon-s);
   }
 
   /* Titres */
@@ -482,9 +478,6 @@
     padding: 0.4rem 0.95rem;
     font-size: 0.875rem;
   }
-  [data-theme='machine'] .bouton {
-    border-radius: var(--rayon-s);
-  }
 
   /* Lien fléché discret */
   .lien {
@@ -544,9 +537,6 @@
     border-color: transparent;
     font-weight: 700;
   }
-  [data-theme='machine'] .puce {
-    border-radius: var(--rayon-s);
-  }
 
   /* Interrupteur « Simple / Technique » (niveau de lecture) */
   .lecture {
@@ -570,10 +560,6 @@
   .lecture button[aria-pressed='true'] {
     background: var(--encre);
     color: var(--fond);
-  }
-  [data-theme='machine'] .lecture,
-  [data-theme='machine'] .lecture button {
-    border-radius: var(--rayon-s);
   }
   .choix-lecture {
     display: inline-flex;
@@ -646,6 +632,18 @@
     flex: 1;
     block-size: 1px;
     background: var(--trait);
+  }
+}
+
+@layer composants {
+  @media (min-width: 72em) {
+    :root {
+      --reserve-menu: 9rem;
+    }
+    /* L'en-tête garde toute la largeur */
+    .entete .conteneur {
+      width: min(100% - 2 * var(--gouttiere), var(--largeur));
+    }
   }
 }
 

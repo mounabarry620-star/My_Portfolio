@@ -1,66 +1,50 @@
 ---
 /**
- * Section 04 — Parcours, dessiné comme un plan de transport : deux lignes de couleur
- * (mécanique, puis informatique), une correspondance, des arrêts. Les étapes à venir
- * (stage, diplôme) sont en pointillés.
+ * Parcours : la frise de Yeabsira Tarekegn (composant d'origine « Timeline » d'Aceternity UI),
+ * traduite sans bibliothèque. La date reste collée en haut pendant qu'on lit l'étape ;
+ * une ligne de couleur se remplit au fil du défilement.
+ * Les étapes (data/parcours.ts) vont du plus récent au plus ancien, les objectifs en tête.
  */
 import TitreSection from '../TitreSection.astro';
-import Icone from '../Icone.astro';
 import { ui } from '@/i18n/ui';
 import type { Langue } from '@/i18n';
-import { etapes, lignes } from '@/data/parcours';
+import { etapes } from '@/data/parcours';
 import { lienRealisation } from '@/data/liens';
 
 interface Props {
   langue: Langue;
 }
 const { langue: l } = Astro.props;
+const liste = [...etapes].reverse();
 ---
 
-<section class="section section--bande" id="parcours" data-section="parcours" aria-labelledby="titre-parcours">
-  <div class="conteneur parcours">
-    <div class="parcours__tete">
-      <TitreSection
-        numero={4}
-        id="parcours"
-        etiquette={ui.parcours.etiquette[l]}
-        titre={ui.parcours.titre[l]}
-        intro={ui.parcours.intro[l]}
-      />
-      <ul class="legende" role="list" data-revele>
-        {
-          (['conakry', 'arles'] as const).map((id) => (
-            <li class="legende__ligne" data-ligne={id}>
-              <span class="legende__trait" aria-hidden="true" />
-              <strong>{lignes[id].nom[l]}</strong>
-              {lignes[id].note[l]}
-            </li>
-          ))
-        }
-      </ul>
-    </div>
+<section class="section parcours" id="parcours" data-section="parcours" aria-labelledby="titre-parcours">
+  <div class="conteneur">
+    <TitreSection id="parcours" titre={ui.parcours.titreCourt[l]} accent={ui.parcours.accent[l]} etiquette={ui.parcours.sousTitre[l]} centre />
+  </div>
 
-    <ol class="plan" role="list">
+  <div class="frise" data-frise>
+    <ol class="frise__liste" role="list" data-frise-liste>
       {
-        etapes.map((e) => (
-          <li
-            class:list={['arret', `arret--${e.genre}`, { 'arret--futur': e.futur }]}
-            data-ligne={e.ligne}
-            data-revele
-          >
-            <span class="arret__point" aria-hidden="true">
-              {e.genre === 'correspondance' && <Icone nom="correspondance" taille={16} />}
-            </span>
-            <p class="arret__dates">{e.dates[l]}</p>
-            <div class="arret__corps">
-              <p class="etiquette arret__genre">{ui.parcours[e.genre][l]}</p>
-              <h3 class="arret__titre">{e.titre[l]}</h3>
-              <p class="arret__lieu">{e.lieu[l]}</p>
-              {e.texte && <p class="arret__texte">{e.texte[l]}</p>}
+        liste.map((e) => (
+          <li class:list={['etape', { 'etape--futur': e.futur }]}>
+            <div class="etape__gauche">
+              <span class="etape__point" aria-hidden="true">
+                <span />
+              </span>
+              <p class="etape__date">{e.dates[l]}</p>
+            </div>
+            <div class="etape__droite">
+              <p class="etape__date etape__date--mobile" aria-hidden="true">
+                {e.dates[l]}
+              </p>
+              <p class="etape__genre">{ui.parcours[e.genre][l]}</p>
+              <h3 class="etape__titre">{e.titre[l]}</h3>
+              <p class="etape__lieu">{e.lieu[l]}</p>
+              {e.texte && <p class="etape__texte">{e.texte[l]}</p>}
               {e.projet && (
-                <a class="lien" href={lienRealisation(l, e.projet)}>
-                  {ui.commun.voirProjet[l]}
-                  <Icone nom="fleche-droite" taille={16} />
+                <a class="lien etape__lien" href={lienRealisation(l, e.projet)}>
+                  {ui.projets.fiche[l]} →
                 </a>
               )}
             </div>
@@ -68,194 +52,211 @@ const { langue: l } = Astro.props;
         ))
       }
     </ol>
+    <div class="frise__ligne" aria-hidden="true">
+      <div class="frise__rayon" data-frise-rayon></div>
+    </div>
   </div>
 </section>
 
+<script>
+  // La ligne se remplit de 0 (haut de la frise à 10 % de l'écran) à 1 (bas de la frise à 50 %).
+  const frise = document.querySelector<HTMLElement>('[data-frise]');
+  const rayon = document.querySelector<HTMLElement>('[data-frise-rayon]');
+  if (frise && rayon) {
+    let attente = false;
+    const maj = () => {
+      attente = false;
+      const r = frise.getBoundingClientRect();
+      const h = innerHeight;
+      const p = Math.min(1, Math.max(0, (0.1 * h - r.top) / (r.height - 0.4 * h)));
+      rayon.style.setProperty('--avance', String(p));
+    };
+    const demander = () => {
+      if (!attente) {
+        attente = true;
+        requestAnimationFrame(maj);
+      }
+    };
+    addEventListener('scroll', demander, { passive: true });
+    addEventListener('resize', demander);
+    maj();
+  }
+</script>
+
 <style>
-  .parcours {
-    display: grid;
-    gap: 1rem clamp(2rem, 6vw, 6rem);
+  .frise {
+    position: relative;
+    inline-size: 100%;
+    max-inline-size: min(80rem, 100% - 2 * var(--reserve-menu));
+    margin: 0 auto;
+    padding-block-end: 5rem;
   }
-  .parcours__tete :global(.section__tete) {
-    margin-block-end: 1.5rem;
+  @media (min-width: 48em) {
+    .frise {
+      padding-inline: 2.5rem;
+    }
   }
-
-  /* Couleur de chaque ligne */
-  [data-ligne='conakry'] {
-    --ligne: var(--accent-2);
-  }
-  [data-ligne='arles'] {
-    --ligne: var(--accent-encre);
-  }
-
-  .legende {
-    display: grid;
-    gap: 0.5rem;
-    margin: 0 0 2rem;
-    font-size: var(--t-s);
-    color: var(--encre-2);
-  }
-  .legende__ligne {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-  .legende__ligne strong {
-    color: var(--encre);
-    font-family: var(--f-etiquette);
-  }
-  .legende__trait {
-    inline-size: 2.25rem;
-    block-size: 0.375rem;
-    border-radius: 999px;
-    background: var(--ligne);
-  }
-
-  /* Le plan : un rail vertical, un arrêt par étape */
-  .plan {
-    --rail: 0.375rem;
-    --point: 1.25rem;
-    display: grid;
+  .frise__liste {
     margin: 0;
-  }
-  .arret {
-    position: relative;
-    display: grid;
-    grid-template-columns: var(--point) 1fr;
-    gap: 0.15rem 1.25rem;
-    padding-block-end: clamp(1.75rem, 4vw, 2.75rem);
-  }
-  /* Tronçon de rail sous chaque arrêt */
-  .arret::before {
-    content: '';
-    position: absolute;
-    inset: calc(var(--point) / 2 + 0.2rem) auto 0 calc((var(--point) - var(--rail)) / 2);
-    inline-size: var(--rail);
-    background: var(--ligne);
-    border-radius: 999px;
-    transform-origin: 50% 0;
-  }
-  .arret:last-child::before {
-    display: none;
-  }
-  .arret--futur::before,
-  .arret:has(+ .arret--futur)::before {
-    background: repeating-linear-gradient(to bottom, var(--ligne) 0 0.4rem, transparent 0.4rem 0.8rem);
-    border-radius: 0;
-  }
-  /* Le rail se trace quand l'arrêt entre dans l'écran */
-  :global(html.js) .arret[data-revele]::before {
-    transform: scaleY(0);
-    transition: transform 1.1s var(--sortie) 0.15s;
-  }
-  :global(html.js) .arret[data-revele].vu::before {
-    transform: none;
+    padding: 0;
+    list-style: none;
   }
 
-  .arret__point {
-    grid-row: 1 / span 2;
-    position: relative;
-    z-index: 1;
+  .etape {
+    display: flex;
+    justify-content: flex-start;
+    padding-block-start: 2.5rem;
+  }
+  @media (min-width: 48em) {
+    .etape {
+      gap: 2.5rem;
+      padding-block-start: 10rem;
+    }
+    .etape:first-child {
+      padding-block-start: 2.5rem;
+    }
+  }
+
+  /* À gauche : le point et la date, collés en haut de l'écran pendant la lecture */
+  .etape__gauche {
+    position: sticky;
+    inset-block-start: 10rem;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: flex-start;
+    max-inline-size: 20rem;
+  }
+  @media (min-width: 48em) {
+    .etape__gauche {
+      flex-direction: row;
+      inline-size: 100%;
+    }
+  }
+  @media (min-width: 64em) {
+    .etape__gauche {
+      max-inline-size: 24rem;
+    }
+  }
+  .etape__point {
+    position: absolute;
+    inset-inline-start: 0.75rem;
     display: grid;
     place-items: center;
-    inline-size: var(--point);
-    block-size: var(--point);
-    margin-block-start: 0.2rem;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border-radius: 50%;
+    background: color-mix(in oklch, var(--encre) 45%, var(--fond));
+  }
+  :global([data-theme='sombre']) .etape__point {
+    background: #000;
+  }
+  .etape__point > span {
+    inline-size: 1rem;
+    block-size: 1rem;
     border-radius: 50%;
     background: var(--fond-2);
-    border: 0.3rem solid var(--ligne);
-    color: var(--sur-accent);
+    border: 1px solid var(--trait-fort);
   }
-  .arret--distinction .arret__point {
-    background: var(--ligne);
-    box-shadow: 0 0 0 0.3rem color-mix(in oklch, var(--ligne) 28%, transparent);
+  .etape--futur .etape__point > span {
+    background: var(--accent);
   }
-  .arret--correspondance .arret__point {
-    inline-size: 2rem;
-    block-size: 2rem;
-    margin-inline-start: -0.375rem;
-    margin-block-start: -0.1rem;
-    border: 0;
-    background: var(--encre);
-    color: var(--fond);
+  .etape__date {
+    display: none;
+    margin: 0;
+    font-family: var(--f-texte);
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--encre-2);
   }
-  .arret--futur .arret__point {
-    border-style: dotted;
-    border-width: 0.25rem;
+  @media (min-width: 48em) {
+    .etape__gauche .etape__date {
+      display: block;
+      padding-inline-start: 5rem;
+    }
   }
 
-  .arret__dates {
-    grid-column: 2;
-    font-family: var(--f-mono);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--encre-2);
-    font-variant-numeric: tabular-nums;
+  /* À droite : l'étape */
+  .etape__droite {
+    position: relative;
+    inline-size: 100%;
+    padding-inline: 5rem 1rem;
   }
-  .arret__corps {
-    grid-column: 2;
-    display: grid;
-    gap: 0.3rem;
-    justify-items: start;
+  @media (min-width: 48em) {
+    .etape__droite {
+      padding-inline-start: 1rem;
+    }
   }
-  .arret__genre {
-    display: inline-block;
-    padding: 0.22rem 0.55rem;
-    border-radius: 999px;
-    background: color-mix(in oklch, var(--ligne) 16%, transparent);
+  .etape__date--mobile {
+    display: block;
+    margin-block-end: 0.75rem;
+    font-size: 1.5rem;
+  }
+  @media (min-width: 48em) {
+    .etape__date--mobile {
+      display: none;
+    }
+  }
+  .etape__genre {
+    margin: 0 0 0.5rem;
     font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: var(--etiquette-interlettre);
+    text-transform: uppercase;
+    color: var(--accent-encre);
   }
-  .arret--objectif .arret__genre {
-    background: var(--accent);
-    color: var(--sur-accent);
-  }
-  .arret__titre {
-    font-size: var(--t-xl);
+  .etape__titre {
+    margin-block-end: 0.75rem;
+    font-family: var(--f-titre);
+    font-size: clamp(1.75rem, 1.2rem + 2.2vw, 3rem);
     font-weight: var(--sous-titre-graisse);
     font-variation-settings: var(--titre-variation);
-    letter-spacing: calc(var(--titre-interlettre) * 0.6);
-    line-height: 1.14;
+    line-height: 1.1;
   }
-  .arret__lieu {
-    font-weight: 650;
-  }
-  .arret__texte {
+  .etape__lieu {
+    margin: 0 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
     color: var(--encre-2);
-    max-inline-size: 38rem;
   }
-  .arret :global(.lien) {
-    margin-block-start: 0.3rem;
+  .etape__texte {
+    margin: 0 0 1.5rem;
+    max-inline-size: 44rem;
+    font-size: 0.875rem;
+    line-height: 1.7;
   }
 
-  @media (min-width: 62em) {
-    .parcours {
-      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr);
-      align-items: start;
+  /* La ligne et son rayon de couleur */
+  .frise__ligne {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 2rem;
+    inline-size: 2px;
+    overflow: hidden;
+    background: linear-gradient(to bottom, transparent 0%, var(--trait-fort), transparent 99%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%);
+  }
+  @media (min-width: 48em) {
+    .frise__ligne {
+      inset-inline-start: calc(2.5rem + 2rem);
     }
-    /* Le titre reste visible pendant qu'on parcourt le plan */
-    .parcours__tete {
-      position: sticky;
-      inset-block-start: calc(var(--entete-h) + 2.5rem);
-    }
-    .arret {
-      grid-template-columns: 7.5rem var(--point) 1fr;
-    }
-    .arret::before {
-      inset-inline-start: calc(7.5rem + 1.25rem + (var(--point) - var(--rail)) / 2);
-    }
-    .arret__dates {
-      grid-column: 1;
-      grid-row: 1;
-      text-align: end;
-      padding-block-start: 0.3rem;
-    }
-    .arret__point {
-      grid-column: 2;
-      grid-row: 1;
-    }
-    .arret__corps {
-      grid-column: 3;
-      grid-row: 1;
+  }
+  .frise__rayon {
+    --avance: 0;
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    inline-size: 2px;
+    block-size: calc(var(--avance) * 100%);
+    border-radius: 999px;
+    background: linear-gradient(to top, var(--accent) 0%, var(--accent-2) 10%, transparent);
+    opacity: min(1, calc(var(--avance) * 10));
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .frise__rayon {
+      --avance: 1 !important;
     }
   }
 </style>

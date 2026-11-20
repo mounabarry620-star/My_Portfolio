@@ -19,7 +19,7 @@ interface Props {
 const { langue: l, autreLangue, surAccueil = false } = Astro.props;
 
 type Commande = { groupe: string; libelle: string; note?: string; href?: string; action?: string; valeur?: string };
-const themes = ['arles', 'marseille', 'conakry', 'machine'] as const;
+const themes = ['bleu', 'sombre', 'clair', 'vert'] as const;
 
 const commandes: Commande[] = [
   ...sections.map((id) => ({

@@ -40,7 +40,7 @@ export const routes = {
 };
 
 /** Identifiants des sections de la page d'accueil (les mêmes dans toutes les langues). */
-export const sections = ['profil', 'projets', 'competences', 'parcours', 'atouts', 'contact'] as const;
+export const sections = ['accueil', 'profil', 'parcours', 'projets', 'contact'] as const;
 export type Section = (typeof sections)[number];
 
 /** Date lisible : « 29 mars 2027 » / « 29 March 2027 ». */

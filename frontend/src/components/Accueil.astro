@@ -1,11 +1,12 @@
 ---
 /**
  * Page d'accueil, commune au français et à l'anglais.
- * Ordre des sections = méthode des « 3 P » : Particularités → Preuves → Profits.
+ * Ordre des sections = méthode des « 3 P » : Particularités (à propos) → Preuves (parcours,
+ * projets, compétences, GitHub) → Profits (atouts), puis le contact.
  */
 import Base from '@/layouts/Base.astro';
 import Hero from './Hero.astro';
-import Particularites from './sections/Particularites.astro';
+import APropos from './sections/APropos.astro';
 import Projets from './sections/Projets.astro';
 import Competences from './sections/Competences.astro';
 import ActiviteGithub from './sections/ActiviteGithub.astro';
@@ -50,11 +51,11 @@ const personne = {
 <Base langue={l} versions={versions} surAccueil>
   <script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(personne)} />
   <Hero langue={l} />
-  <Particularites langue={l} />
+  <APropos langue={l} />
+  <Parcours langue={l} />
   <Projets langue={l} />
   <Competences langue={l} />
   <ActiviteGithub langue={l} />
-  <Parcours langue={l} />
   <Atouts langue={l} />
   <Contact langue={l} />
 </Base>

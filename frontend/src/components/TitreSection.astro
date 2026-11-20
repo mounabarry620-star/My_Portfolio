@@ -1,21 +1,29 @@
 ---
-/** En-tête de section : pastille numérotée (comme une ligne de transport), étiquette, titre, chapô. */
+/**
+ * En-tête de section : grand titre dont la fin est mise en couleur (« À propos de *moi* »),
+ * une petite ligne en capitales dessous, puis le chapô.
+ */
 interface Props {
-  numero: number;
+  /** Gardé pour compatibilité (anciennes sections numérotées) : n'est plus affiché. */
+  numero?: number;
   etiquette: string;
   titre: string;
+  /** Mot(s) en couleur, écrits après le titre. */
+  accent?: string;
   intro?: string;
   id: string;
+  /** Centrer le titre (sections « vitrine »). */
+  centre?: boolean;
 }
-const { numero, etiquette, titre, intro, id } = Astro.props;
+const { etiquette, titre, accent, intro, id, centre = false } = Astro.props;
 ---
 
-<header class="section__tete">
-  <p class="section__repere etiquette" data-revele>
-    <span class="pastille">{String(numero).padStart(2, '0')}</span>
-    {etiquette}
-  </p>
-  <h2 class="titre-2" id={`titre-${id}`} data-revele style="--delai: .06s">{titre}</h2>
+<header class:list={['section__tete', { 'section__tete--centre': centre }]}>
+  <h2 class="titre-2" id={`titre-${id}`} data-revele>
+    {titre}
+    {accent && <span class="section__accent">{accent}</span>}
+  </h2>
+  <p class="section__repere etiquette" data-revele style="--delai: .06s">{etiquette}</p>
   {
     intro && (
       <p class="chapo" data-revele style="--delai: .12s">
@@ -24,3 +32,16 @@ const { numero, etiquette, titre, intro, id } = Astro.props;
     )
   }
 </header>
+
+<style>
+  .section__accent {
+    color: var(--accent-encre);
+  }
+  .section__tete--centre {
+    justify-items: center;
+    text-align: center;
+  }
+  .section__tete--centre :global(.chapo) {
+    margin-inline: auto;
+  }
+</style>

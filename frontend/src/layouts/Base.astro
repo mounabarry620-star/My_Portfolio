@@ -43,6 +43,7 @@ const canonique = absolu(versions[l]);
 
 // Fichier principal (alphabet latin) de chaque police, pour précharger celles du thème actif.
 const variables = [
+  '--police-nunito',
   '--police-fraunces',
   '--police-instrument',
   '--police-bricolage',
@@ -55,10 +56,10 @@ const variables = [
 const fichier = (v: (typeof variables)[number]) =>
   fontData[v]?.find((f) => f.subset === 'latin' && f.style === 'normal')?.src[0]?.url ?? '';
 const policesParTheme = {
-  arles: [fichier('--police-fraunces'), fichier('--police-instrument')],
-  marseille: [fichier('--police-bricolage')],
-  conakry: [fichier('--police-syne'), fichier('--police-dmsans')],
-  machine: [fichier('--police-jetbrains')],
+  bleu: [fichier('--police-bricolage')],
+  sombre: [fichier('--police-nunito')],
+  clair: [fichier('--police-fraunces'), fichier('--police-instrument')],
+  vert: [fichier('--police-syne'), fichier('--police-dmsans')],
 };
 
 // Chargement anticipé des pages au survol (API « Speculation Rules », navigateurs récents).
@@ -79,7 +80,7 @@ const regles = JSON.stringify({
 ---
 
 <!doctype html>
-<html lang={codesHtml[l]} data-theme="arles" data-lecture="simple" data-courriel={profil.email}>
+<html lang={codesHtml[l]} data-theme="bleu" data-lecture="simple" data-courriel={profil.email}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -89,14 +90,14 @@ const regles = JSON.stringify({
       (function () {
         var d = document.documentElement;
         var q = new URLSearchParams(location.search);
-        var T = ['arles', 'marseille', 'conakry', 'machine'];
+        var T = ['bleu', 'sombre', 'clair', 'vert'];
         var t = q.get('theme');
         var n = q.get('lecture');
         try {
           if (T.indexOf(t) < 0) t = localStorage.getItem('theme');
           if (n !== 'simple' && n !== 'technique') n = localStorage.getItem('lecture');
         } catch (e) {}
-        if (T.indexOf(t) < 0) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'conakry' : 'arles';
+        if (T.indexOf(t) < 0) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'bleu';
         d.dataset.theme = t;
         d.dataset.lecture = n === 'technique' ? 'technique' : 'simple';
         d.classList.add('js');

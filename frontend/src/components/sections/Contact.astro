@@ -1,10 +1,19 @@
 ---
-/** Section 06 — Contact (« terminus ») : la demande de stage, les moyens de me joindre, le CV et les questions fréquentes. */
+/**
+ * Contact : mise en page et icônes de Yaroslav Lebedenko (mail, lieu, GitHub, LinkedIn — avec son accord).
+ * À gauche les coordonnées, à droite le formulaire (il prépare un e-mail, rien n'est stocké).
+ * Puis les questions fréquentes.
+ */
 import TitreSection from '../TitreSection.astro';
 import Icone from '../Icone.astro';
 import { ui } from '@/i18n/ui';
-import { routes, url, type Langue } from '@/i18n';
+import { url, type Langue } from '@/i18n';
 import { faq, profil } from '@/data/profil';
+
+// Icônes de Lebedenko, insérées telles quelles (elles prennent la couleur du texte).
+const svg = import.meta.glob<string>('/src/assets/lebedenko/*.svg', { query: '?raw', import: 'default', eager: true });
+const icone = (nom: string) =>
+  (svg[`/src/assets/lebedenko/${nom}.svg`] ?? '').replace('<svg', '<svg aria-hidden="true" focusable="false"');
 
 interface Props {
   langue: Langue;
@@ -15,151 +24,249 @@ const courriel = `mailto:${profil.email}?subject=${encodeURIComponent(ui.contact
 
 <section class="section contact" id="contact" data-section="contact" aria-labelledby="titre-contact">
   <div class="conteneur">
-    <TitreSection numero={6} id="contact" etiquette={ui.contact.etiquette[l]} titre={ui.contact.titre[l]} intro={ui.contact.texte[l]} />
-
     <div class="contact__grille">
-      <div class="contact__principal">
-        <a class="contact__courriel" href={courriel} data-revele>
-          <span>{profil.email}</span>
-          <Icone nom="fleche-sortie" taille={40} />
-        </a>
+      <div class="contact__infos">
+        <TitreSection id="contact" titre={ui.contact.titreCourt[l]} accent={ui.contact.accent[l]} etiquette={ui.contact.etiquette[l]} intro={ui.contact.texte[l]} />
 
-        <div class="contact__actions" data-revele style="--delai: .08s">
-          <button type="button" class="bouton" data-copier={profil.email} data-copie-texte={ui.contact.copie[l]}>
-            <Icone nom="copier" class="icone-copier" />
-            <Icone nom="valide" class="icone-valide" />
-            <span data-copier-libelle aria-live="polite">{ui.contact.copier[l]}</span>
-          </button>
-          <a class="bouton bouton--contour" href={`tel:${profil.telephone.lien}`}>
-            <Icone nom="telephone" />
-            {profil.telephone.affichage}
-          </a>
-          <a class="bouton bouton--contour" href={profil.liens.linkedin} target="_blank" rel="me noopener">
-            <Icone nom="linkedin" />
-            LinkedIn<span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
-          </a>
-          <a class="bouton bouton--contour" href={profil.liens.github} target="_blank" rel="me noopener">
-            <Icone nom="github" />
-            GitHub<span class="cache-visuel"> {ui.commun.nouvelOnglet[l]}</span>
-          </a>
+        <div class="infos" data-revele>
+          <div class="info">
+            <span class="info__icone" set:html={icone('mail')} />
+            <div>
+              <h3 class="info__titre">{ui.contact.mail[l]}</h3>
+              <a class="info__lien" href={courriel}>{profil.email}</a>
+            </div>
+          </div>
+          <div class="info">
+            <span class="info__icone"><Icone nom="telephone" taille={30} /></span>
+            <div>
+              <h3 class="info__titre">{ui.contact.telephone[l]}</h3>
+              <a class="info__lien" href={`tel:${profil.telephone.lien}`}>{profil.telephone.affichage}</a>
+            </div>
+          </div>
+          <div class="info">
+            <span class="info__icone" set:html={icone('location')} />
+            <div>
+              <h3 class="info__titre">{ui.contact.lieu[l]}</h3>
+              <span>{ui.billet.mobiliteValeur[l]}</span>
+            </div>
+          </div>
         </div>
 
-        <ul class="contact__cv" role="list" data-revele style="--delai: .14s">
-          <li>
-            <a class="lien" href={url('/cv/CV_Mamadou_Bailo_Barry_FR.pdf')} download>
-              <Icone nom="telecharger" taille={16} />
-              {ui.contact.cvFr[l]}
-            </a>
-          </li>
-          <li>
-            <a class="lien" href={url('/cv/CV_Mamadou_Bailo_Barry_EN.pdf')} download>
-              <Icone nom="telecharger" taille={16} />
-              {ui.contact.cvEn[l]}
-            </a>
-          </li>
-          <li>
-            <a class="lien" href={routes.cv(l)}>
-              {ui.contact.cvPage[l]}
-              <Icone nom="fleche-droite" taille={16} />
-            </a>
-          </li>
-        </ul>
+        <div class="social" data-revele>
+          <a class="social__lien" href={profil.liens.github} title="GitHub" target="_blank" rel="me noopener">
+            <span set:html={icone('github')} />
+            <span class="cache-visuel">GitHub {ui.commun.nouvelOnglet[l]}</span>
+          </a>
+          <a class="social__lien" href={profil.liens.linkedin} title="LinkedIn" target="_blank" rel="me noopener">
+            <span set:html={icone('linkedin')} />
+            <span class="cache-visuel">LinkedIn {ui.commun.nouvelOnglet[l]}</span>
+          </a>
+          <a class="social__lien social__cv" href={url(l === 'fr' ? '/cv/CV_Mamadou_Bailo_Barry_FR.pdf' : '/cv/CV_Mamadou_Bailo_Barry_EN.pdf')} download>
+            <Icone nom="telecharger" taille={24} />
+            CV
+          </a>
+        </div>
       </div>
 
-      <div class="faq" data-revele style="--delai: .1s">
-        <h3 class="etiquette">{ui.contact.faqTitre[l]}</h3>
-        {
-          faq.map((q, i) => (
-            <details name="faq" open={i === 0}>
-              <summary>
-                <span>{q.question[l]}</span>
-                <span class="faq__signe" aria-hidden="true" />
-              </summary>
-              <p>{q.reponse[l]}</p>
-            </details>
-          ))
-        }
-      </div>
+      <!-- Le formulaire, comme celui de Lebedenko ; il prépare un e-mail dans la messagerie du visiteur. -->
+      <form class="formulaire" action={`mailto:${profil.email}`} method="post" enctype="text/plain" data-formulaire data-revele data-objet={ui.contact.objetMail[l]}>
+        <label class="champ">
+          <span class="cache-visuel">{ui.contact.nom[l]}</span>
+          <input class="saisie" name="nom" autocomplete="name" placeholder={ui.contact.nom[l]} required />
+        </label>
+        <label class="champ">
+          <span class="cache-visuel">{ui.contact.email[l]}</span>
+          <input class="saisie" name="email" type="email" autocomplete="email" placeholder={ui.contact.email[l]} required />
+        </label>
+        <label class="champ">
+          <span class="cache-visuel">{ui.contact.message[l]}</span>
+          <textarea class="saisie" name="message" rows="6" placeholder={ui.contact.message[l]} required></textarea>
+        </label>
+        <button type="submit" class="envoyer">
+          <Icone nom="envoyer" taille={20} />
+          {ui.contact.envoyer[l]}
+        </button>
+        <p class="formulaire__note">{ui.contact.noteEnvoi[l]}</p>
+      </form>
+    </div>
+
+    <div class="faq" data-revele>
+      <h3 class="etiquette">{ui.contact.faqTitre[l]}</h3>
+      {
+        faq.map((q, i) => (
+          <details name="faq" open={i === 0}>
+            <summary>
+              <span>{q.question[l]}</span>
+              <span class="faq__signe" aria-hidden="true" />
+            </summary>
+            <p>{q.reponse[l]}</p>
+          </details>
+        ))
+      }
     </div>
   </div>
 </section>
 
+<script>
+  // Le formulaire ouvre la messagerie du visiteur avec le message déjà écrit.
+  const formulaire = document.querySelector<HTMLFormElement>('[data-formulaire]');
+  formulaire?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const d = new FormData(formulaire);
+    const corps = `${d.get('message')}\n\n— ${d.get('nom')} (${d.get('email')})`;
+    const objet = formulaire.dataset.objet ?? '';
+    location.href = `${formulaire.action}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}`;
+  });
+</script>
+
 <style>
-  .contact {
-    background: var(--fond-2);
-  }
   .contact__grille {
     display: grid;
-    gap: clamp(2.5rem, 6vw, 5rem);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
   }
-  .contact__principal {
+  @media (min-width: 60em) {
+    .contact__grille {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .contact__infos :global(.section__tete) {
+    margin-block-end: 1.75rem;
+  }
+
+  /* Coordonnées (Lebedenko) */
+  .infos {
     display: grid;
-    gap: 1.75rem;
-    align-content: start;
-    min-inline-size: 0;
+    align-items: start;
+    gap: 20px;
+    margin-block-end: 25px;
   }
-  /* L'adresse e-mail, écrite en grand : c'est l'action principale de la page */
-  .contact__courriel {
+  .info {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    line-height: 1.25;
+    color: var(--encre-2);
+  }
+  .info__icone {
+    display: grid;
+    flex: none;
+    inline-size: 30px;
+    block-size: 30px;
+    margin-inline-end: 15px;
+    color: var(--accent-encre);
+  }
+  .info__icone :global(svg) {
+    inline-size: 100%;
+    block-size: 100%;
+    fill: currentColor;
+  }
+  .info__titre {
+    margin-block-end: 5px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--encre);
+  }
+  .info__lien {
+    color: inherit;
+    text-decoration: none;
+  }
+  .info__lien:hover,
+  .info__lien:focus-visible {
+    text-decoration: underline;
+  }
+  .social {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .social__lien {
     display: inline-flex;
     align-items: center;
-    gap: 0.3em;
-    justify-self: start;
-    max-inline-size: 100%;
-    font-family: var(--f-titre);
-    font-size: clamp(1.2rem, 5.2vw, 3.1rem);
-    font-weight: var(--titre-graisse);
-    font-variation-settings: var(--titre-variation);
-    letter-spacing: var(--titre-interlettre);
-    line-height: 1.15;
+    gap: 6px;
+    min-block-size: 44px;
+    padding: 5px 10px;
+    color: var(--encre-2);
+    font-weight: 700;
     text-decoration: none;
-    background: linear-gradient(var(--accent), var(--accent)) 0 100% / 100% 0.14em no-repeat;
-    padding-block-end: 0.12em;
-    transition: background-size 0.5s var(--sortie);
+    transition: 0.2s;
   }
-  .contact__courriel span {
-    overflow-wrap: anywhere;
+  .social__lien:first-child {
+    padding-inline-start: 0;
   }
-  .contact__courriel :global(svg) {
-    flex: none;
-    inline-size: 0.8em;
-    block-size: 0.8em;
-    transition: transform 0.5s var(--ressort);
+  .social__lien :global(svg) {
+    inline-size: 24px;
+    block-size: 24px;
+    fill: currentColor;
   }
-  .contact__courriel:hover {
-    background-size: 100% 100%;
+  .social__lien:hover,
+  .social__lien:focus-visible {
+    color: var(--accent-encre);
+    transform: translateY(-3px);
+  }
+
+  /* Formulaire (Lebedenko) */
+  .formulaire {
+    display: grid;
+    gap: 25px;
+  }
+  .champ {
+    position: relative;
+  }
+  .saisie {
+    inline-size: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--trait);
+    color: var(--encre);
+    font-size: 1.125rem;
+    caret-color: var(--accent);
+    outline: 2px solid transparent;
+    resize: none;
+    transition: 0.2s;
+  }
+  .saisie::placeholder {
+    color: var(--encre-2);
+  }
+  .saisie:hover,
+  .saisie:focus-visible {
+    outline-color: var(--accent);
+  }
+  .envoyer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-inline-size: 150px;
+    min-block-size: 44px;
+    margin-inline-end: auto;
+    padding: 10px 30px;
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--encre);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1;
+    transition: 0.2s;
+  }
+  .envoyer:hover,
+  .envoyer:focus-visible {
+    background-color: var(--accent);
     color: var(--sur-accent);
   }
-  .contact__courriel:hover :global(svg) {
-    transform: translate(0.08em, -0.08em) rotate(8deg);
-  }
-  :global([data-theme='machine']) .contact__courriel,
-  :global([data-theme='conakry']) .contact__courriel {
-    font-size: clamp(1.05rem, 4.5vw, 2.6rem);
-  }
-
-  .contact__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-  }
-  .bouton :global(.icone-valide) {
-    display: none;
-  }
-  .bouton[data-copie] :global(.icone-valide) {
-    display: block;
-  }
-  .bouton[data-copie] :global(.icone-copier) {
-    display: none;
-  }
-  .contact__cv {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem 1.75rem;
+  .formulaire__note {
     margin: 0;
-    padding-block-start: 1.5rem;
-    border-block-start: 1px solid var(--trait);
+    font-size: 0.8125rem;
+    color: var(--encre-2);
   }
 
+  .faq {
+    max-inline-size: 56rem;
+    margin: clamp(3rem, 7vw, 5rem) auto 0;
+  }
   /* ---- Questions fréquentes : accordéon natif (<details>) ---- */
   .faq > .etiquette {
     padding-block-end: 0.8rem;

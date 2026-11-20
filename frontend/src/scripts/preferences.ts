@@ -4,7 +4,7 @@
  * par un petit script dans <head>, puis gérées ici.
  */
 
-export const THEMES = ['arles', 'marseille', 'conakry', 'machine'] as const;
+export const THEMES = ['bleu', 'sombre', 'clair', 'vert'] as const;
 export type Theme = (typeof THEMES)[number];
 export type Lecture = 'simple' | 'technique';
 
@@ -12,24 +12,24 @@ const racine = document.documentElement;
 
 /** Couleur de la barre du navigateur (mobile) pour chaque thème. */
 const COULEUR_BARRE: Record<Theme, string> = {
-  arles: '#f8f0e1',
-  marseille: '#f0f6fc',
-  conakry: '#17143a',
-  machine: '#0a110c',
+  bleu: '#f1f6fc',
+  sombre: '#0b0b0e',
+  clair: '#ffffff',
+  vert: '#effaf4',
 };
 
 /** Polices à charger pour chaque thème (variables CSS créées par Astro). */
 const POLICES: Record<Theme, { variable: string; graisse: number }[]> = {
-  arles: [
+  bleu: [{ variable: '--police-bricolage', graisse: 750 }],
+  sombre: [{ variable: '--police-nunito', graisse: 800 }],
+  clair: [
     { variable: '--police-fraunces', graisse: 400 },
     { variable: '--police-instrument', graisse: 400 },
   ],
-  marseille: [{ variable: '--police-bricolage', graisse: 750 }],
-  conakry: [
+  vert: [
     { variable: '--police-syne', graisse: 760 },
     { variable: '--police-dmsans', graisse: 400 },
   ],
-  machine: [{ variable: '--police-jetbrains', graisse: 400 }],
 };
 
 const moinsDeMouvement = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -44,7 +44,7 @@ function memoriser(cle: string, valeur: string) {
 
 export function themeActuel(): Theme {
   const t = racine.dataset.theme as Theme;
-  return THEMES.includes(t) ? t : 'arles';
+  return THEMES.includes(t) ? t : 'bleu';
 }
 
 export function lectureActuelle(): Lecture {

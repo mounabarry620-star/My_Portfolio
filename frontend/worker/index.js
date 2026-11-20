@@ -16,7 +16,8 @@
 import { GoogleGenAI, Modality } from '@google/genai';
 
 // Si un modèle est saturé (erreur 503/429/500), on passe au suivant de la liste.
-const MODELES_CHAT = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+// (gemini-3.8-flash est passé en dernier : il reste parfois bloqué sans répondre.)
+const MODELES_CHAT = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.8-flash'];
 const MODELE_VOIX = 'gemini-3.8-live';
 const VOIX = 'Aoede';
 const MINUTES_VOIX = 5; // durée maximale d'une conversation vocale
@@ -71,11 +72,24 @@ async function chat(requete, env, url) {
       await new Promise((r) => setTimeout(r, 1500));
       continue;
     }
-    reponse = await fetch(`${API}/models/${modele}:streamGenerateContent?alt=sse`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-      body: corpsGemini,
-    });
+    // Si un modèle ne répond pas du tout en 10 s (il arrive qu'il reste bloqué), on passe au suivant.
+    // Le délai ne vaut que pour le début de la réponse : une fois commencée, elle n'est pas coupée.
+    const arret = new AbortController();
+    const minuteur = setTimeout(() => arret.abort(), 10_000);
+    try {
+      reponse = await fetch(`${API}/models/${modele}:streamGenerateContent?alt=sse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+        body: corpsGemini,
+        signal: arret.signal,
+      });
+    } catch {
+      console.error('gemini chat', modele, 'sans réponse');
+      reponse = null;
+      continue;
+    } finally {
+      clearTimeout(minuteur);
+    }
     if (reponse.ok) break;
     console.error('gemini chat', modele, reponse.status);
     if (![429, 500, 503].includes(reponse.status)) break; // autre erreur : inutile d'insister
@@ -160,8 +174,8 @@ async function consigne(env, url, langue) {
   }
   const debut =
     langue === 'en'
-      ? '\n\nThe visitor is reading the English version of the site: answer in English unless they write or speak French.'
-      : '\n\nLe visiteur lit la version française du site : réponds en français sauf s\'il écrit ou parle anglais.';
+      ? '\n\nLANGUAGE: the visitor is on the ENGLISH version of the site. Always answer in English (written and spoken), translating the facts of the French sheet above. Switch to French only if the visitor clearly writes or speaks French.'
+      : '\n\nLANGUE : le visiteur est sur la version FRANÇAISE du site. Réponds toujours en français (à l\'écrit comme à l\'oral). Passe à l\'anglais seulement si le visiteur écrit ou parle clairement anglais.';
   return fiche + debut;
 }
 

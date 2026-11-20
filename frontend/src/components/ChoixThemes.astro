@@ -1,6 +1,6 @@
 ---
 /**
- * Les quatre thèmes. Chacun correspond à un lieu du parcours et possède
+ * Les quatre thèmes (bleu, sombre, clair, vert). Chacun possède
  * ses couleurs ET sa typographie : l'aperçu « Aa » est écrit dans la police du thème.
  * Sur téléphone, l'aperçu « Aa » est masqué pour ne pas télécharger quatre polices
  * à l'ouverture du menu : elles ne sont chargées qu'au moment du choix.
@@ -12,7 +12,7 @@ interface Props {
   langue: Langue;
 }
 const { langue: l } = Astro.props;
-const themes = ['arles', 'marseille', 'conakry', 'machine'] as const;
+const themes = ['bleu', 'sombre', 'clair', 'vert'] as const;
 ---
 
 <div class="themes" role="group" aria-label={ui.reglages.choisirTheme[l]}>

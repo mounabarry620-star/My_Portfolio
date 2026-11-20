@@ -1,6 +1,6 @@
 ---
 /**
- * En-tête du site : marque, navigation en « plan de ligne » (un arrêt par section),
+ * En-tête du site : marque, menu vertical à droite (une pilule par section),
  * réglages (niveau de lecture, langue, thème) et menu mobile.
  */
 import Icone from './Icone.astro';
@@ -36,21 +36,6 @@ const lienSection = (id: string) => (surAccueil ? `#${id}` : routes.section(l, i
       <span class="marque__nom">{profil.nomComplet}</span>
     </a>
 
-    <nav class="ligne" aria-label={ui.nav.titre[l]}>
-      <ol role="list">
-        {
-          sections.map((id) => (
-            <li>
-              <a href={lienSection(id)} data-arret={id}>
-                <span class="ligne__arret" aria-hidden="true" />
-                {ui.nav[id][l]}
-              </a>
-            </li>
-          ))
-        }
-      </ol>
-    </nav>
-
     <div class="outils">
       <div class="lecture" role="group" aria-label={`${ui.reglages.lecture[l]} — ${ui.reglages.lectureAide[l]}`}>
         <button type="button" data-choix-lecture="simple" aria-pressed="true">{ui.reglages.simple[l]}</button>
@@ -76,7 +61,11 @@ const lienSection = (id: string) => (surAccueil ? `#${id}` : routes.section(l, i
         aria-label={ui.reglages.choisirTheme[l]}
         title={ui.reglages.choisirTheme[l]}
       >
-        <Icone nom="theme" taille={20} />
+        <!-- L'icône suit le thème : lune (sombre), soleil (clair), ciel (bleu), feuille (vert) -->
+        <span class="theme-icone" data-pour="sombre"><Icone nom="lune" taille={20} /></span>
+        <span class="theme-icone" data-pour="clair"><Icone nom="soleil" taille={20} /></span>
+        <span class="theme-icone" data-pour="bleu"><Icone nom="nuage-soleil" taille={20} /></span>
+        <span class="theme-icone" data-pour="vert"><Icone nom="feuille" taille={20} /></span>
       </button>
 
       <button
@@ -97,6 +86,132 @@ const lienSection = (id: string) => (surAccueil ? `#${id}` : routes.section(l, i
   </div>
   <div class="entete__progression" aria-hidden="true"></div>
 </header>
+
+<!-- Menu vertical à droite (grands écrans) : les « pilules » de Yeabsira Tarekegn (composant PillNav
+     de React Bits), traduites sans bibliothèque. La pilule de la section en cours est remplie. -->
+<nav class="pilules" aria-label={ui.nav.titre[l]} data-pilules>
+  <!-- Poignée : on attrape le menu pour le déplacer (double-clic : retour à sa place) -->
+  <span class="pilules__poignee" title={ui.nav.deplacer[l]} aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+  <ul role="list">
+    {
+      sections.map((id) => (
+        <li>
+          <a class="pilule" href={lienSection(id)} data-arret={id} draggable="false">
+            <span class="pilule__cercle" aria-hidden="true" />
+            <span class="pilule__pile">
+              <span class="pilule__texte">{ui.nav[id][l]}</span>
+              <span class="pilule__texte-survol" aria-hidden="true">
+                {ui.nav[id][l]}
+              </span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<script>
+  // Taille du cercle de chaque pilule (même calcul que PillNav) : il part du bas et remplit la pilule.
+  const placer = () => {
+    document.querySelectorAll<HTMLElement>('.pilule').forEach((p) => {
+      const c = p.querySelector<HTMLElement>('.pilule__cercle');
+      if (!c) return;
+      const { width: w, height: h } = p.getBoundingClientRect();
+      if (!w || !h) return;
+      const R = (w * w) / 4 / (2 * h) + h / 2;
+      const D = Math.ceil(2 * R) + 2;
+      const delta = Math.ceil(R - Math.sqrt(Math.max(0, R * R - (w * w) / 4))) + 1;
+      c.style.width = `${D}px`;
+      c.style.height = `${D}px`;
+      c.style.bottom = `-${delta}px`;
+      c.style.transformOrigin = `50% ${D - delta}px`;
+      p.style.setProperty('--h', `${h}px`);
+    });
+  };
+  placer();
+  addEventListener('resize', placer);
+  document.fonts?.ready.then(placer);
+
+  // Menu déplaçable à la souris (ou au doigt), comme une fenêtre. Position retenue entre les visites.
+  const menu = document.querySelector<HTMLElement>('[data-pilules]');
+  if (menu) {
+    const CLE = 'menu-position';
+    const borner = (x: number, y: number) => {
+      const r = menu.getBoundingClientRect();
+      return { x: Math.min(Math.max(8, x), innerWidth - r.width - 8), y: Math.min(Math.max(8, y), innerHeight - r.height - 8) };
+    };
+    const poser = (x: number, y: number) => {
+      const p = borner(x, y);
+      menu.style.left = `${p.x}px`;
+      menu.style.top = `${p.y}px`;
+      menu.style.right = 'auto';
+      menu.style.transform = 'none';
+      return p;
+    };
+    try {
+      const memo = JSON.parse(localStorage.getItem(CLE) ?? 'null');
+      if (memo) poser(memo.x * innerWidth, memo.y * innerHeight);
+    } catch {}
+
+    let depart: { x: number; y: number; gauche: number; haut: number } | null = null;
+    let deplace = false;
+    menu.addEventListener('pointerdown', (e) => {
+      if (e.button > 0) return;
+      e.preventDefault(); // pas de glisser-déposer natif des liens, pas de sélection de texte
+      const r = menu.getBoundingClientRect();
+      depart = { x: e.clientX, y: e.clientY, gauche: r.left, haut: r.top };
+      deplace = false;
+    });
+    addEventListener('pointermove', (e) => {
+      if (!depart) return;
+      const dx = e.clientX - depart.x;
+      const dy = e.clientY - depart.y;
+      if (!deplace && dx * dx + dy * dy < 25) return; // un simple clic reste un clic
+      if (!deplace) {
+        deplace = true;
+        menu.dataset.deplacement = '';
+      }
+      poser(depart.gauche + dx, depart.haut + dy);
+    });
+    const lacher = () => {
+      if (!depart) return;
+      depart = null;
+      delete menu.dataset.deplacement;
+      if (!deplace) return;
+      const r = menu.getBoundingClientRect();
+      try {
+        localStorage.setItem(CLE, JSON.stringify({ x: r.left / innerWidth, y: r.top / innerHeight }));
+      } catch {}
+    };
+    addEventListener('pointerup', lacher);
+    addEventListener('pointercancel', lacher);
+    // Après un déplacement, le lâcher ne doit pas ouvrir un lien.
+    menu.addEventListener(
+      'click',
+      (e) => {
+        if (deplace) {
+          e.preventDefault();
+          e.stopPropagation();
+          deplace = false;
+        }
+      },
+      true,
+    );
+    menu.querySelector('.pilules__poignee')?.addEventListener('dblclick', () => {
+      menu.removeAttribute('style');
+      try {
+        localStorage.removeItem(CLE);
+      } catch {}
+    });
+    addEventListener('resize', () => {
+      if (menu.style.left) {
+        const r = menu.getBoundingClientRect();
+        poser(r.left, r.top);
+      }
+    });
+  }
+</script>
 
 <!-- Choix du thème (fenêtre native « popover ») -->
 <div id="themes" class="themes-volet" popover>
@@ -149,6 +264,16 @@ const lienSection = (id: string) => (surAccueil ? `#${id}` : routes.section(l, i
 </dialog>
 
 <style>
+  .theme-icone {
+    display: none;
+  }
+  :global(html:not([data-theme])) .theme-icone[data-pour='bleu'],
+  :global([data-theme='sombre']) .theme-icone[data-pour='sombre'],
+  :global([data-theme='clair']) .theme-icone[data-pour='clair'],
+  :global([data-theme='bleu']) .theme-icone[data-pour='bleu'],
+  :global([data-theme='vert']) .theme-icone[data-pour='vert'] {
+    display: grid;
+  }
   .entete {
     position: sticky;
     inset-block-start: 0;
@@ -215,74 +340,147 @@ const lienSection = (id: string) => (surAccueil ? `#${id}` : routes.section(l, i
     display: none;
   }
 
-  /* ---- Navigation « plan de ligne » ---- */
-  .ligne {
+  /* ---- Menu vertical à droite (pilules) ---- */
+  .pilules {
     display: none;
   }
-  .ligne ol {
-    display: flex;
-    align-items: center;
-    margin: 0;
+  @media (min-width: 72em) {
+    .pilules {
+      position: fixed;
+      inset-block-start: 50%;
+      inset-inline-end: 1rem;
+      z-index: 40;
+      display: block;
+      padding: 4px;
+      border: 1px solid var(--trait);
+      border-radius: 28px;
+      background: color-mix(in oklch, var(--surface) 72%, transparent);
+      box-shadow: 0 12px 30px rgb(0 0 0 / 0.22);
+      backdrop-filter: blur(16px);
+      transform: translateY(-50%);
+    }
   }
-  .ligne li {
-    display: flex;
-    align-items: center;
+  .pilules {
+    touch-action: none;
+    user-select: none;
   }
-  .ligne li + li::before {
-    content: '';
-    inline-size: clamp(0.6rem, 1.5vw, 1.6rem);
-    block-size: 2px;
-    margin-inline: 0.15rem;
-    background: var(--trait-fort);
-    border-radius: 2px;
-    transition: background-color 0.35s;
+  .pilules[data-deplacement] {
+    cursor: grabbing;
+    box-shadow: 0 18px 40px rgb(0 0 0 / 0.32);
   }
-  .ligne a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.5rem 0.4rem;
-    font-family: var(--f-etiquette);
-    font-size: 0.875rem;
-    font-weight: 550;
-    letter-spacing: 0;
-    color: var(--encre-2);
-    text-decoration: none;
-    white-space: nowrap;
-    border-radius: var(--rayon-s);
-    transition: color 0.25s;
+  .pilules__poignee {
+    display: grid;
+    grid-template-columns: repeat(3, 4px);
+    gap: 3px;
+    justify-content: center;
+    padding: 6px 0 8px;
+    cursor: grab;
   }
-  .ligne a:hover {
-    color: var(--encre);
-  }
-  .ligne__arret {
-    inline-size: 0.625rem;
-    block-size: 0.625rem;
+  .pilules__poignee i {
+    inline-size: 4px;
+    block-size: 4px;
     border-radius: 50%;
-    border: 2px solid var(--trait-fort);
-    background: var(--fond);
+    background: var(--encre-2);
+    opacity: 0.6;
+  }
+  .pilules ul {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+  }
+  .pilule {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    block-size: 44px;
+    padding-inline: 16px;
+    overflow: hidden;
+    border: 1px solid var(--trait);
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--encre) 5%, transparent);
+    color: var(--encre-2);
+    font-family: var(--f-etiquette);
+    font-size: 15px;
+    font-weight: 550;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
     transition:
-      background-color 0.35s,
-      border-color 0.35s,
-      transform 0.5s var(--ressort);
+      border-color 0.2s,
+      background-color 0.2s;
   }
-  /* Arrêt en cours */
-  .ligne a[aria-current='true'] {
+  .pilule:hover {
+    border-color: var(--trait-fort);
+  }
+  .pilule__cercle {
+    position: absolute;
+    inset-inline-start: 50%;
+    z-index: 1;
+    display: block;
+    border-radius: 50%;
+    background: color-mix(in oklch, var(--encre) 16%, var(--surface));
+    transform: translateX(-50%) scale(0);
+    transition: transform 0.6s var(--sortie);
+    pointer-events: none;
+    will-change: transform;
+  }
+  .pilule__pile {
+    position: relative;
+    z-index: 2;
+    display: inline-block;
+    line-height: 1;
+  }
+  .pilule__texte,
+  .pilule__texte-survol {
+    display: inline-block;
+    transition:
+      transform 0.6s var(--sortie),
+      opacity 0.6s var(--sortie);
+  }
+  .pilule__texte-survol {
+    position: absolute;
+    inset: 0 auto auto 0;
     color: var(--encre);
-    font-weight: 700;
+    opacity: 0;
+    transform: translateY(calc(var(--h, 44px) + 12px));
   }
-  .ligne a[aria-current='true'] .ligne__arret {
+  .pilule:hover .pilule__cercle,
+  .pilule:focus-visible .pilule__cercle {
+    transform: translateX(-50%) scale(1.2);
+  }
+  .pilule:hover .pilule__texte,
+  .pilule:focus-visible .pilule__texte {
+    transform: translateY(calc(-1 * (var(--h, 44px) + 8px)));
+  }
+  .pilule:hover .pilule__texte-survol,
+  .pilule:focus-visible .pilule__texte-survol {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  /* La section où l'on se trouve : pilule remplie de la couleur du thème */
+  .pilule[aria-current='true'] {
+    border-color: transparent;
+    font-weight: 750;
+  }
+  .pilule[aria-current='true'] .pilule__cercle {
     background: var(--accent);
-    border-color: var(--accent-encre);
-    transform: scale(1.45);
+    transform: translateX(-50%) scale(1.2);
   }
-  /* Arrêts et tronçons déjà parcourus */
-  .ligne li:has(~ li a[aria-current='true']) .ligne__arret {
-    background: var(--accent-encre);
-    border-color: var(--accent-encre);
+  .pilule[aria-current='true'] .pilule__texte,
+  .pilule[aria-current='true'] .pilule__texte-survol {
+    color: var(--sur-accent);
   }
-  .ligne li:is(:has(a[aria-current='true']), :has(~ li a[aria-current='true']))::before {
-    background: var(--accent-encre);
+  @media (prefers-reduced-motion: reduce) {
+    .pilule__cercle,
+    .pilule__texte,
+    .pilule__texte-survol {
+      transition: none;
+    }
   }
 
   /* ---- Outils ---- */
@@ -326,9 +524,6 @@ const lienSection = (id: string) => (surAccueil ? `#${id}` : routes.section(l, i
     flex: 1;
     padding: 0.7rem 1rem;
     font-size: 0.9375rem;
-  }
-  :global([data-theme='machine']) .outil {
-    border-radius: var(--rayon-s);
   }
 
   /* ---- Volet des thèmes ---- */
@@ -450,9 +645,6 @@ const lienSection = (id: string) => (surAccueil ? `#${id}` : routes.section(l, i
     }
   }
   @media (min-width: 72em) {
-    .ligne {
-      display: block;
-    }
     .outil--menu {
       display: none;
     }

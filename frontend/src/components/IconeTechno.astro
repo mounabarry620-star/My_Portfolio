@@ -1,0 +1,122 @@
+---
+/**
+ * Une icône de technologie, toujours une tuile carrée aux coins arrondis (voir data/icones-techno.ts) :
+ *  - Skill Icons : variante sombre en thème Sombre, claire ailleurs ;
+ *  - sinon une tuile pleine à la couleur de la marque, avec le logo en blanc (comme C++, JS, TS).
+ * Décorative : le nom est donné à côté (texte caché ou infobulle).
+ */
+import * as simpleIcons from 'simple-icons';
+import Logo from './Logo.astro';
+import type { Icone } from '@/data/icones-techno';
+
+interface Props {
+  icone: Icone;
+  taille?: number;
+}
+const { icone, taille = 24 } = Astro.props;
+
+const fichiers = import.meta.glob<string>('/src/assets/skill-icons/*.svg', { query: '?url', import: 'default', eager: true });
+const adresse = (nom: string) => fichiers[`/src/assets/skill-icons/${nom}.svg`];
+const lucide = import.meta.glob<string>('/node_modules/lucide-static/icons/{database,workflow,webhook,mail,layers,box}.svg', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+const devicon = import.meta.glob<string>('/node_modules/devicon/icons/java/java-plain.svg', { query: '?raw', import: 'default', eager: true });
+/** Logos dessinés ici (24 × 24). */
+const PERSO: Record<string, string> = {
+  windows: 'M3 3h8.4v8.4H3zM12.6 3H21v8.4h-8.4zM3 12.6h8.4V21H3zM12.6 12.6H21V21h-8.4z',
+};
+
+let chemin: string | undefined;
+let trait: string | undefined;
+let brut: { svg: string; vue: string } | undefined;
+if ('glyphe' in icone) {
+  if (icone.glyphe.startsWith('perso:')) {
+    chemin = PERSO[icone.glyphe.slice(6)];
+  } else if (icone.glyphe.startsWith('dv:')) {
+    const n = icone.glyphe.slice(3);
+    const texte = devicon[`/node_modules/devicon/icons/${n}/${n}-plain.svg`] ?? '';
+    brut = {
+      vue: texte.match(/viewBox="([^"]+)"/)?.[1] ?? '0 0 128 128',
+      svg: texte.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, ''),
+    };
+  } else if (icone.glyphe.startsWith('si:')) {
+    const n = icone.glyphe.slice(3);
+    const cle = `si${n.slice(0, 1).toUpperCase()}${n.slice(1)}` as keyof typeof simpleIcons;
+    chemin = (simpleIcons[cle] as { path: string } | undefined)?.path;
+  } else {
+    trait = lucide[`/node_modules/lucide-static/icons/${icone.glyphe.slice(3)}.svg`]
+      ?.replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/^[\s\S]*?<svg[^>]*>/, '')
+      .replace(/<\/svg>\s*$/, '');
+  }
+}
+---
+
+{
+  'skill' in icone ? (
+    icone.double ? (
+      <>
+        <img class="ic ic--sombre" src={adresse(`${icone.skill}-Dark`)} alt="" width={taille} height={taille} loading="lazy" decoding="async" />
+        <img class="ic ic--clair" src={adresse(`${icone.skill}-Light`)} alt="" width={taille} height={taille} loading="lazy" decoding="async" />
+      </>
+    ) : (
+      <img class="ic" src={adresse(icone.skill)} alt="" width={taille} height={taille} loading="lazy" decoding="async" />
+    )
+  ) : 'glyphe' in icone ? (
+    <svg class="ic" viewBox="0 0 256 256" width={taille} height={taille} aria-hidden="true" focusable="false">
+      <rect width="256" height="256" rx="60" fill={icone.fond} />
+      {chemin && (
+        <g transform="translate(56 56) scale(6)">
+          <path d={chemin} fill={icone.encre} />
+        </g>
+      )}
+      {brut && <svg x="56" y="56" width="144" height="144" viewBox={brut.vue} style={`color: ${icone.encre}`} class="ic__brut" set:html={brut.svg} />}
+      {trait && (
+        <g
+          transform="translate(56 56) scale(6)"
+          fill="none"
+          stroke={icone.encre}
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          set:html={trait}
+        />
+      )}
+    </svg>
+  ) : (
+    <span class="ic ic-tuile" style={`--t: ${taille}px`}>
+      <Logo nom={icone.logo} />
+    </span>
+  )
+}
+
+<style>
+  .ic {
+    display: block;
+    flex: none;
+  }
+  /* Logo Devicon recoloré : toutes ses formes prennent la couleur d'encre */
+  .ic__brut :global(*) {
+    fill: currentColor;
+  }
+  .ic--sombre,
+  :global([data-theme='sombre']) .ic--clair {
+    display: none;
+  }
+  :global([data-theme='sombre']) .ic--sombre {
+    display: block;
+  }
+  /* Dernier recours (aucun logo en tuile) : logo habituel sur fond clair */
+  .ic-tuile {
+    display: grid;
+    place-items: center;
+    inline-size: var(--t);
+    block-size: var(--t);
+    border-radius: 23.4%;
+    background: #f4f2ed;
+    font-size: calc(var(--t) * 0.6);
+  }
+</style>

@@ -1,0 +1,488 @@
+---
+/**
+ * Le globe des projets : reprise du « DomeGallery » utilisé par Yeabsira Tarekegn
+ * (composant d'origine : React Bits, https://reactbits.dev — licence MIT + Commons Clause).
+ * Traduit en JavaScript sans bibliothèque. Mêmes réglages que chez lui :
+ * 34 segments, rayon mini 800 px, rotation verticale ± 20°, élan après un lancer,
+ * un clic agrandit l'image avec son titre, sa description et un lien.
+ *
+ * Accessibilité : les tuiles sont décoratives (aria-hidden) ; les mêmes projets sont listés en texte
+ * juste en dessous. Sur écran tactile, glisser verticalement fait défiler la page.
+ */
+import { getImage } from 'astro:assets';
+import type { Projet } from '@/data/projets';
+import { lienRealisation } from '@/data/liens';
+import { ui } from '@/i18n/ui';
+import type { Langue } from '@/i18n';
+
+interface Props {
+  projets: Projet[];
+  langue: Langue;
+}
+const { projets, langue: l } = Astro.props;
+
+const SEGMENTS = 34;
+
+// Toutes les images des projets (couverture + galerie), en deux tailles.
+const sources = projets.flatMap((p) =>
+  [p.couverture, ...(p.galerie ?? [])].filter(Boolean).map((im) => ({ projet: p, image: im! })),
+);
+const pool = await Promise.all(
+  sources.map(async ({ projet, image }) => ({
+    petite: (await getImage({ src: image.image, width: 420, format: 'webp', quality: 70 })).src,
+    grande: (await getImage({ src: image.image, width: 1200, format: 'webp', quality: 78 })).src,
+    titre: projet.titre[l],
+    description: projet.accroche.simple[l],
+    lien: lienRealisation(l, projet.slug) ?? '',
+  })),
+);
+
+// Emplacements des tuiles (comme dans DomeGallery) : colonnes de 5, décalées une sur deux.
+const colonnes = Array.from({ length: SEGMENTS }, (_, i) => -37 + i * 2);
+const places = colonnes.flatMap((x, c) => (c % 2 === 0 ? [-4, -2, 0, 2, 4] : [-3, -1, 1, 3, 5]).map((y) => ({ x, y })));
+const choisies = places.map((_, i) => pool[i % pool.length]!);
+// Évite deux fois la même image côte à côte.
+for (let i = 1; i < choisies.length; i++) {
+  if (choisies[i]!.petite !== choisies[i - 1]!.petite) continue;
+  for (let j = i + 1; j < choisies.length; j++) {
+    if (choisies[j]!.petite !== choisies[i]!.petite) {
+      [choisies[i], choisies[j]] = [choisies[j]!, choisies[i]!];
+      break;
+    }
+  }
+}
+const tuiles = places.map((p, i) => ({ ...p, ...choisies[i]! }));
+---
+
+{
+  pool.length > 0 && (
+    <div class="dome" data-dome data-fiche={ui.projets.fiche[l]} style={`--segments: ${SEGMENTS}`}>
+      <div class="dome__scene" data-dome-scene>
+        <div class="dome__etage" aria-hidden="true">
+          <div class="dome__sphere" data-dome-sphere>
+            {tuiles.map((t) => (
+              <div
+                class="dome__place"
+                style={`--x: ${t.x}; --y: ${t.y}`}
+                data-grande={t.grande}
+                data-titre={t.titre}
+                data-description={t.description}
+                data-lien={t.lien}
+              >
+                <div class="dome__tuile">
+                  <img src={t.petite} alt="" loading="lazy" decoding="async" draggable="false" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div class="dome__vignette" />
+        <div class="dome__flou" />
+        <div class="dome__fondu dome__fondu--haut" />
+        <div class="dome__fondu dome__fondu--bas" />
+        <div class="dome__visionneuse" data-dome-visionneuse>
+          <div class="dome__voile" data-dome-voile />
+          <div class="dome__cadre" data-dome-cadre />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  const dome = document.querySelector<HTMLElement>('[data-dome]');
+  const scene = dome?.querySelector<HTMLElement>('[data-dome-scene]');
+  const sphere = dome?.querySelector<HTMLElement>('[data-dome-sphere]');
+  const visionneuse = dome?.querySelector<HTMLElement>('[data-dome-visionneuse]');
+  const voile = dome?.querySelector<HTMLElement>('[data-dome-voile]');
+  const cadre = dome?.querySelector<HTMLElement>('[data-dome-cadre]');
+
+  if (dome && scene && sphere && visionneuse && voile && cadre) {
+    const VERTICAL_MAX = 20;
+    const SENSIBILITE = 20;
+    const AMORTI = 1; // dragDampening = 2, ramené entre 0 et 1 comme dans l'original
+    const borne = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
+    const autourDeZero = (deg: number) => ((((deg + 180) % 360) + 360) % 360) - 180;
+
+    const rotation = { x: 0, y: 0 };
+    const appliquer = () => {
+      sphere.style.transform = `translateZ(calc(var(--rayon) * -1)) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
+    };
+
+    // Rayon de la sphère selon la place disponible (même calcul que DomeGallery, fit = 0.75).
+    new ResizeObserver(([e]) => {
+      const { width: w, height: h } = e!.contentRect;
+      const base = w / h >= 1.3 ? w : Math.min(w, h);
+      const rayon = Math.round(Math.max(Math.min(base * 0.75, h * 1.35), 800));
+      dome.style.setProperty('--rayon', `${rayon}px`);
+      dome.style.setProperty('--marge-visionneuse', `${Math.max(8, Math.round(Math.min(w, h) * 0.25))}px`);
+      appliquer();
+    }).observe(dome);
+    appliquer();
+
+    /* -------- Élan après un lancer */
+    let elan: number | null = null;
+    const arreterElan = () => {
+      if (elan) cancelAnimationFrame(elan);
+      elan = null;
+    };
+    const lancer = (vx: number, vy: number) => {
+      let vX = borne(vx, -1.4, 1.4) * 80;
+      let vY = borne(vy, -1.4, 1.4) * 80;
+      const frottement = 0.94 + 0.055 * AMORTI;
+      const seuil = 0.015 - 0.01 * AMORTI;
+      const maxImages = Math.round(90 + 270 * AMORTI);
+      let n = 0;
+      const pas = () => {
+        vX *= frottement;
+        vY *= frottement;
+        if ((Math.abs(vX) < seuil && Math.abs(vY) < seuil) || ++n > maxImages) return (elan = null);
+        rotation.x = borne(rotation.x - vY / 200, -VERTICAL_MAX, VERTICAL_MAX);
+        rotation.y = autourDeZero(rotation.y + vX / 200);
+        appliquer();
+        elan = requestAnimationFrame(pas);
+      };
+      arreterElan();
+      elan = requestAnimationFrame(pas);
+    };
+
+    /* -------- Glisser */
+    let depart: { x: number; y: number; rx: number; ry: number } | null = null;
+    let traces: { x: number; y: number; t: number }[] = [];
+    let cible: HTMLElement | null = null;
+    let ouvert = false;
+
+    scene.addEventListener('pointerdown', (e) => {
+      if (ouvert || e.button > 0) return;
+      arreterElan();
+      depart = { x: e.clientX, y: e.clientY, rx: rotation.x, ry: rotation.y };
+      traces = [{ x: e.clientX, y: e.clientY, t: performance.now() }];
+      cible = (e.target as Element).closest<HTMLElement>('.dome__place');
+      scene.setPointerCapture(e.pointerId);
+    });
+    scene.addEventListener('pointermove', (e) => {
+      if (!depart) return;
+      const dx = e.clientX - depart.x;
+      const dy = e.clientY - depart.y;
+      rotation.x = borne(depart.rx - dy / SENSIBILITE, -VERTICAL_MAX, VERTICAL_MAX);
+      rotation.y = depart.ry + dx / SENSIBILITE;
+      appliquer();
+      traces.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+      if (traces.length > 6) traces.shift();
+    });
+    const lacher = (e: PointerEvent) => {
+      if (!depart) return;
+      const dx = e.clientX - depart.x;
+      const dy = e.clientY - depart.y;
+      const tactile = e.pointerType === 'touch';
+      const touche = dx * dx + dy * dy <= (tactile ? 100 : 36);
+      depart = null;
+      if (touche) {
+        if (cible) ouvrir(cible);
+      } else {
+        const a = traces[0]!;
+        const b = traces[traces.length - 1]!;
+        const dt = Math.max(1, b.t - a.t);
+        const vx = (b.x - a.x) / dt;
+        const vy = (b.y - a.y) / dt;
+        if (Math.abs(vx) > 0.005 || Math.abs(vy) > 0.005) lancer(vx, vy);
+      }
+      cible = null;
+    };
+    scene.addEventListener('pointerup', lacher);
+    scene.addEventListener('pointercancel', () => (depart = null));
+
+    /* -------- Agrandir une image (et la refermer) */
+    let surcouche: HTMLElement | null = null;
+    let tuileOuverte: HTMLElement | null = null;
+    let rectDepart: DOMRect | null = null;
+    const DUREE = 300;
+
+    function ouvrir(place: HTMLElement) {
+      const tuile = place.querySelector<HTMLElement>('.dome__tuile');
+      if (!tuile || ouvert) return;
+      ouvert = true;
+      tuileOuverte = tuile;
+      rectDepart = tuile.getBoundingClientRect();
+      const rScene = scene!.getBoundingClientRect();
+      const rCadre = cadre!.getBoundingClientRect();
+
+      surcouche = document.createElement('div');
+      surcouche.className = 'dome__agrandie';
+      const largeur = Math.min(innerWidth * 0.84, 980);
+      const hauteur = Math.min(innerHeight * 0.78, 640);
+      const gauche = rCadre.left - rScene.left + (rCadre.width - largeur) / 2;
+      const haut = rCadre.top - rScene.top + (rCadre.height - hauteur) / 2;
+      Object.assign(surcouche.style, { left: `${gauche}px`, top: `${haut}px`, width: `${largeur}px`, height: `${hauteur}px` });
+
+      const img = document.createElement('img');
+      img.src = place.dataset.grande ?? '';
+      img.alt = '';
+      const legende = document.createElement('div');
+      legende.className = 'dome__legende';
+      const titre = document.createElement('p');
+      titre.className = 'dome__legende-titre';
+      titre.textContent = place.dataset.titre ?? '';
+      const texte = document.createElement('p');
+      texte.className = 'dome__legende-texte';
+      texte.textContent = place.dataset.description ?? '';
+      legende.append(titre, texte);
+      if (place.dataset.lien) {
+        const a = document.createElement('a');
+        a.className = 'dome__legende-lien';
+        a.href = place.dataset.lien;
+        a.textContent = dome!.dataset.fiche ?? '';
+        legende.append(a);
+      }
+      surcouche.append(img, legende);
+      visionneuse!.append(surcouche);
+
+      // Part de la tuile, grandit jusqu'à sa place.
+      const sx = rectDepart.width / largeur;
+      const sy = rectDepart.height / hauteur;
+      const tx = rectDepart.left - rScene.left - gauche;
+      const ty = rectDepart.top - rScene.top - haut;
+      surcouche.style.transform = `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`;
+      tuile.style.visibility = 'hidden';
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (!surcouche) return;
+          surcouche.style.opacity = '1';
+          surcouche.style.transform = 'none';
+          dome!.dataset.agrandie = 'true';
+        }),
+      );
+    }
+
+    function fermer() {
+      if (!surcouche || !rectDepart || !tuileOuverte) return;
+      const s = surcouche;
+      const t = tuileOuverte;
+      const r = s.getBoundingClientRect();
+      s.style.transformOrigin = 'top left';
+      s.style.transform = `translate(${rectDepart.left - r.left}px, ${rectDepart.top - r.top}px) scale(${rectDepart.width / r.width}, ${rectDepart.height / r.height})`;
+      s.style.opacity = '0';
+      delete dome!.dataset.agrandie;
+      setTimeout(() => {
+        s.remove();
+        t.style.visibility = '';
+        ouvert = false;
+      }, DUREE);
+      surcouche = null;
+      tuileOuverte = null;
+    }
+    voile.addEventListener('click', fermer);
+    addEventListener('keydown', (e) => e.key === 'Escape' && fermer());
+  }
+</script>
+
+<style>
+  /* Dimensions : écran entier sur ordinateur, 70 % de l'écran sur téléphone (comme chez Yeabsira) */
+  .dome {
+    --rayon: 800px;
+    --marge-visionneuse: 72px;
+    --circ: calc(var(--rayon) * 3.14);
+    --rot: calc((360deg / var(--segments)) / 2);
+    --tuile-l: calc(var(--circ) / var(--segments));
+    --tuile-h: calc(var(--circ) / var(--segments));
+    --voile-couleur: var(--fond);
+    position: relative;
+    inline-size: min(100% - 2 * var(--reserve-menu), 72rem);
+    block-size: 70svh;
+    margin: 2.5rem auto;
+  }
+  @media (min-width: 48em) {
+    .dome {
+      block-size: min(100svh, 60rem);
+    }
+  }
+  .dome__scene {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    user-select: none;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+  .dome__scene:active {
+    cursor: grabbing;
+  }
+  .dome__etage {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: auto;
+    perspective: calc(var(--rayon) * 2);
+    perspective-origin: 50% 50%;
+  }
+  .dome__sphere,
+  .dome__place,
+  .dome__tuile {
+    transform-style: preserve-3d;
+  }
+  .dome__sphere {
+    position: absolute;
+    transform: translateZ(calc(var(--rayon) * -1));
+    will-change: transform;
+  }
+  .dome__place {
+    position: absolute;
+    inset: -999px;
+    inline-size: calc(var(--tuile-l) * 2);
+    block-size: calc(var(--tuile-h) * 2);
+    margin: auto;
+    transform-origin: 50% 50%;
+    backface-visibility: hidden;
+    transform: rotateY(calc(var(--rot) * (var(--x) + 0.5))) rotateX(calc(var(--rot) * (var(--y) - 0.5))) translateZ(var(--rayon));
+  }
+  .dome__tuile {
+    position: absolute;
+    inset: 10px;
+    overflow: hidden;
+    border-radius: 30px;
+    background: var(--fond-2);
+    cursor: pointer;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    transition: transform 300ms;
+  }
+  .dome__tuile img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    backface-visibility: hidden;
+  }
+
+  /* Bords qui se fondent dans la page */
+  .dome__vignette,
+  .dome__flou,
+  .dome__fondu {
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .dome__vignette {
+    inset: 0;
+    background-image: radial-gradient(transparent 65%, var(--voile-couleur) 100%);
+  }
+  .dome__flou {
+    inset: 0;
+    mask-image: radial-gradient(transparent 70%, #000 90%);
+    backdrop-filter: blur(3px);
+  }
+  .dome__fondu {
+    inset-inline: 0;
+    block-size: 120px;
+    z-index: 5;
+    background: linear-gradient(to bottom, transparent, var(--voile-couleur));
+  }
+  .dome__fondu--haut {
+    inset-block-start: 0;
+    transform: rotate(180deg);
+  }
+  .dome__fondu--bas {
+    inset-block-end: 0;
+  }
+
+  /* Image agrandie */
+  .dome__visionneuse {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--marge-visionneuse);
+    pointer-events: none;
+  }
+  .dome__voile {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: rgb(0 0 0 / 0.4);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 500ms;
+  }
+  .dome[data-agrandie] .dome__voile {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .dome__cadre {
+    block-size: 100%;
+    aspect-ratio: 1;
+  }
+  @media (max-aspect-ratio: 1/1) {
+    .dome__cadre {
+      inline-size: 100%;
+      block-size: auto;
+    }
+  }
+  .dome :global(.dome__agrandie) {
+    position: absolute;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #050505;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+    opacity: 0;
+    transform-origin: top left;
+    transition:
+      transform 300ms ease,
+      opacity 300ms ease;
+    pointer-events: auto;
+  }
+  .dome :global(.dome__agrandie img) {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    inline-size: 100%;
+    object-fit: contain;
+    background: #050505;
+  }
+  .dome :global(.dome__legende) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 18px 16px;
+    background: rgb(9 9 11 / 0.95);
+    border-block-start: 1px solid rgb(255 255 255 / 0.12);
+    color: #fff;
+    text-align: start;
+  }
+  .dome :global(.dome__legende-titre) {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .dome :global(.dome__legende-texte) {
+    margin: 0;
+    max-inline-size: 92%;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgb(255 255 255 / 0.82);
+  }
+  .dome :global(.dome__legende-lien) {
+    display: inline-flex;
+    align-items: center;
+    inline-size: fit-content;
+    block-size: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.95);
+    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 300ms;
+  }
+  .dome :global(.dome__legende-lien:hover) {
+    background: rgb(255 255 255 / 0.8);
+  }
+</style>

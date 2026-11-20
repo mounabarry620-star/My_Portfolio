@@ -57,7 +57,7 @@ const ouvrir = async (chemin, largeur, hauteur, echelle = 2) => {
   await page.setViewport({ width: largeur, height: hauteur, deviceScaleFactor: echelle });
   await page.goto(base + chemin, { waitUntil: 'networkidle0' });
   await page.evaluate(() => document.fonts.ready);
-  await page.addStyleTag({ content: 'html { scrollbar-gutter: auto !important; } .billet__badge-texte { animation: none !important; }' });
+  await page.addStyleTag({ content: 'html { scrollbar-gutter: auto !important; }' });
   await new Promise((r) => setTimeout(r, 2800));
 };
 
@@ -65,14 +65,14 @@ try {
   if (!seulementCv) {
     // 1. Captures du portfolio
     const vues = {};
-    for (const t of ['arles', 'marseille', 'conakry', 'machine']) {
+    for (const t of ['bleu', 'sombre', 'clair', 'vert']) {
       await ouvrir(`/?theme=${t}&lecture=simple`, 1440, 810);
       vues[t] = await page.screenshot();
     }
     const assets = join(racine, 'src/assets/projets');
-    await sharp(vues.arles).resize({ width: 2400 }).webp({ quality: 88, effort: 6 }).toFile(join(assets, 'portfolio-v2.webp'));
+    await sharp(vues.bleu).resize({ width: 2400 }).webp({ quality: 88, effort: 6 }).toFile(join(assets, 'portfolio-v2.webp'));
     const L = 1200, H = 675, F = 8;
-    const tuiles = await Promise.all(['arles', 'marseille', 'conakry', 'machine'].map((t) => sharp(vues[t]).resize(L, H).toBuffer()));
+    const tuiles = await Promise.all(['bleu', 'sombre', 'clair', 'vert'].map((t) => sharp(vues[t]).resize(L, H).toBuffer()));
     await sharp({ create: { width: 2 * L + F, height: 2 * H + F, channels: 3, background: '#1b1b1b' } })
       .composite(tuiles.map((input, i) => ({ input, left: (i % 2) * (L + F), top: Math.floor(i / 2) * (H + F) })))
       .webp({ quality: 86, effort: 6 })
@@ -85,23 +85,20 @@ try {
       en: 'Software and web developer · BUT in Computer Science, IUT Aix-Marseille',
     };
     for (const l of ['fr', 'en']) {
-      await ouvrir(`${l === 'fr' ? '/' : '/en/'}?theme=arles&lecture=simple`, 1200, 630);
+      await ouvrir(`${l === 'fr' ? '/' : '/en/'}?theme=bleu&lecture=simple`, 1200, 630);
       await page.addStyleTag({ content: `
-        .entete, .evitement, .hero__accroche, .hero__actions, .assistant, .disponible__jours { display: none !important; }
+        .entete, .pilules, .evitement, .hero__accroche, .hero__actions, .assistant, .disponible__jours { display: none !important; }
         .hero { min-block-size: 630px !important; block-size: 630px; padding-block: 0 !important; }
-        .hero__grille { align-items: center; width: calc(100% - 144px) !important; grid-template-columns: minmax(0, 1fr) 330px !important; gap: 56px !important; }
-        .hero__billet { zoom: 0.72; }
-        .hero__fond { mask-image: none !important; -webkit-mask-image: none !important; }
+        .hero__grille { min-block-size: 630px !important; align-items: center; width: calc(100% - 144px) !important; grid-template-columns: minmax(0, 1fr) 380px !important; gap: 48px !important; }
+        .hero__dessin { inline-size: 380px !important; }
         .hero__texte { gap: 26px !important; }
-        .og-sous { font-family: var(--f-etiquette); font-size: 25px; font-weight: 600; line-height: 1.35; color: var(--encre-2); max-width: 600px; margin: 0; }
-        .depart { font-size: 19px !important; } .hero__salut { font-size: 24px !important; }
-        * { animation-delay: 0s !important; animation-duration: 0.01s !important; }
-        .hero__mots { animation: none !important; transform: translateY(-20%) !important; }` });
+        .og-sous { font-family: var(--f-texte); font-size: 25px; font-weight: 600; line-height: 1.35; color: var(--encre-2); max-width: 600px; margin: 0; }
+        * { animation: none !important; transition: none !important; }` });
       await page.evaluate((txt) => {
         const p = document.createElement('p');
         p.className = 'og-sous';
         p.textContent = txt;
-        document.querySelector('.hero__nom').after(p);
+        document.querySelector('.hero__titre').after(p);
       }, sousTitres[l]);
       await new Promise((r) => setTimeout(r, 1200));
       const image = await page.screenshot({ clip: { x: 0, y: 0, width: 1200, height: 630 } });

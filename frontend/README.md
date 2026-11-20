@@ -148,6 +148,27 @@ PUBLIC_TURNSTILE_SITEKEY=<clé publique> npm run cf:deploy
 
 Sans Turnstile, la limite par adresse IP reste active.
 
+## Crédits
+
+Le design reprend, avec l'accord de leurs auteurs (deux amis), des éléments de deux portfolios :
+
+- **Yaroslav Lebedenko** (https://portfolio-nailheart.vercel.app, code : github.com/Nailheart/portfolio) :
+  l'ordinateur de l'accueil (`public/img/pc.svg`), la rangée d'outils, les cartes de projets,
+  le contact (icônes mail, lieu, GitHub, LinkedIn) et le pied de page avec la fusée.
+- **Yeabsira Tarekegn** (https://yeabsiras-portfolio.vercel.app, code : github.com/itsyaba/portfolio-v2) :
+  la frise du parcours, la tablette VS Code de « À propos », le globe des projets et le menu en pilules.
+
+Composants d'origine, traduits ici sans bibliothèque : « DomeGallery » et « PillNav » de React Bits
+(https://reactbits.dev), « Timeline » et « ContainerScroll » d'Aceternity UI (https://ui.aceternity.com).
+
+Logos : Skill Icons (https://github.com/tandpfun/skill-icons, MIT, licence copiée dans
+`src/assets/skill-icons/`), Simple Icons (CC0), Devicon (MIT), Lucide (ISC).
+
+Kangourou 3D : « baby kangaroo 3d model » par rt699448
+(https://sketchfab.com/3d-models/baby-kangaroo-3d-model-0048d4fce4884357917dc8d3f2bfe684), licence CC BY 4.0,
+modifié (patte levée, rendu Blender : voir `blender/kangourou/`). Sa licence demande de citer l'auteur
+là où le modèle est montré : le crédit reste donc aussi dans le pied de page du site.
+
 ## Ancienne adresse (Vercel)
 
 Le site était hébergé sur Vercel jusqu'en novembre 2026. Vercel reconstruit toujours le site

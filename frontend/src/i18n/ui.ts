@@ -32,7 +32,12 @@ export const ui = {
 
   nav: {
     titre: { fr: 'Navigation principale', en: 'Main navigation' },
-    profil: { fr: 'Profil', en: 'Profile' },
+    accueil: { fr: 'Accueil', en: 'Home' },
+    deplacer: {
+      fr: 'Glisser pour déplacer le menu · double-clic pour le remettre en place',
+      en: 'Drag to move the menu · double-click to put it back',
+    },
+    profil: { fr: 'À propos', en: 'About' },
     projets: { fr: 'Projets', en: 'Projects' },
     competences: { fr: 'Compétences', en: 'Skills' },
     parcours: { fr: 'Parcours', en: 'Journey' },
@@ -57,25 +62,31 @@ export const ui = {
   },
 
   themes: {
-    arles: {
-      nom: { fr: 'Arles', en: 'Arles' },
-      note: { fr: "Jour · là où j'étudie", en: 'Day · where I study' },
+    bleu: {
+      nom: { fr: 'Bleu', en: 'Blue' },
+      note: { fr: 'Bleu clair et blanc', en: 'Light blue and white' },
     },
-    marseille: {
-      nom: { fr: 'Marseille', en: 'Marseille' },
-      note: { fr: 'Mer · là où je vis', en: 'Sea · where I live' },
+    sombre: {
+      nom: { fr: 'Sombre', en: 'Dark' },
+      note: { fr: 'Noir et rose-rouge', en: 'Black and crimson' },
     },
-    conakry: {
-      nom: { fr: 'Conakry', en: 'Conakry' },
-      note: { fr: "Nuit · là d'où je viens", en: 'Night · where I come from' },
+    clair: {
+      nom: { fr: 'Clair', en: 'Light' },
+      note: { fr: 'Noir sur blanc', en: 'Black on white' },
     },
-    machine: {
-      nom: { fr: 'Machine', en: 'Machine' },
-      note: { fr: 'Terminal · là où je code', en: 'Terminal · where I code' },
+    vert: {
+      nom: { fr: 'Vert', en: 'Green' },
+      note: { fr: 'Vert et bleu', en: 'Green and blue' },
     },
   },
 
   hero: {
+    bonjour: { fr: 'Bonjour !', en: 'Hello there!' },
+    jeSuis: { fr: 'Je suis', en: "I'm" },
+    pcLibelle: {
+      fr: "Illustration : un ordinateur. Le bouton rond allume ou éteint l'écran.",
+      en: 'Illustration: a computer. The round button turns the screen on or off.',
+    },
     surtitre: { fr: 'Portfolio 2026 – 2027', en: 'Portfolio 2026 – 2027' },
     salutationsAria: {
       fr: 'Bonjour, en pular, en français, en anglais et en allemand',
@@ -120,6 +131,28 @@ export const ui = {
     qr: { fr: 'ou scannez le code avec votre téléphone', en: 'or scan the code with your phone' },
   },
 
+  apropos: {
+    titre: { fr: 'À propos de', en: 'About' },
+    accent: { fr: 'moi', en: 'me' },
+    etiquette: { fr: 'Un aperçu de mon parcours', en: 'A glimpse of who I am' },
+    sousTitre: {
+      fr: "Étudiant en 2e année de BUT Informatique à l'IUT d'Arles, à la recherche d'un stage.",
+      en: 'Second-year Computer Science (BUT) student at IUT Arles, looking for an internship.',
+    },
+    imageAlt: {
+      fr: "Illustration choisie pour la section « À propos »",
+      en: 'Illustration chosen for the About section',
+    },
+    /** Mots mis en couleur dans le texte de la tablette. */
+    motsCles: {
+      fr: ['génie mécanique', 'Conakry', 'contrat à durée indéterminée (CDI)', 'Lidl', 'Pular', 'français', 'anglais', 'allemand'],
+      en: ['mechanical engineering', 'Conakry', 'part-time permanent contract', 'Lidl', 'Pular', 'French', 'English', 'German'],
+    },
+    outils: { fr: 'Mes outils', en: 'My tools' },
+    ecole: { fr: "IUT d'Arles · BUT Informatique, 2e année", en: 'IUT Arles · BUT Computer Science, 2nd year' },
+    messageImage: { fr: "Voici l'image de ma section « À propos ».", en: 'Here is the picture for my About section.' },
+  },
+
   particularites: {
     etiquette: { fr: 'Profil', en: 'Profile' },
     titre: { fr: 'Ce qui me distingue', en: 'What makes me different' },
@@ -130,6 +163,17 @@ export const ui = {
   },
 
   projets: {
+    titreCourt: { fr: 'Mes', en: 'My' },
+    accent: { fr: 'projets', en: 'work' },
+    sousTitre: { fr: 'Ce que j\'ai réalisé', en: 'What I have built' },
+    voirPlus: { fr: 'Voir plus', en: 'See more' },
+    voirMoins: { fr: 'Voir moins', en: 'See less' },
+    autresTitre: { fr: 'Autres projets', en: 'Other projects' },
+    autresIntro: {
+      fr: 'Faites tourner le globe et touchez une image pour l’agrandir. Les travaux plus courts sont listés dessous.',
+      en: 'Spin the globe and tap a picture to enlarge it. Shorter pieces of work are listed below.',
+    },
+    fiche: { fr: 'Voir la fiche', en: 'Read more' },
     etiquette: { fr: 'Projets', en: 'Projects' },
     titre: { fr: "Ce que j'ai réalisé", en: 'What I have built' },
     intro: {
@@ -182,6 +226,12 @@ export const ui = {
   },
 
   parcours: {
+    titreCourt: { fr: 'Mon', en: 'My' },
+    accent: { fr: 'parcours', en: 'journey' },
+    sousTitre: {
+      fr: "Mes études et mes emplois, du plus récent au plus ancien.",
+      en: 'My studies and jobs, from the most recent to the oldest.',
+    },
     etiquette: { fr: 'Parcours', en: 'Journey' },
     titre: { fr: "D'où je viens, où je vais", en: 'Where I come from, where I am going' },
     intro: {
@@ -207,7 +257,20 @@ export const ui = {
   },
 
   contact: {
-    etiquette: { fr: 'Contact', en: 'Contact' },
+    titreCourt: { fr: 'Contactez-', en: 'Contact' },
+    accent: { fr: 'moi !', en: 'me!' },
+    mail: { fr: 'E-mail', en: 'Email' },
+    telephone: { fr: 'Téléphone', en: 'Phone' },
+    lieu: { fr: 'Lieu', en: 'Location' },
+    nom: { fr: 'Votre nom', en: 'Your name' },
+    email: { fr: 'Votre e-mail', en: 'Your email' },
+    message: { fr: 'Votre message', en: 'Your message' },
+    envoyer: { fr: 'Envoyer', en: 'Send' },
+    noteEnvoi: {
+      fr: 'Le bouton ouvre votre messagerie avec le message prêt à partir. Rien n’est enregistré sur ce site.',
+      en: 'The button opens your email app with the message ready to send. Nothing is stored on this site.',
+    },
+    etiquette: { fr: 'Parlons de votre stage', en: "Let's talk about your internship" },
     titre: { fr: 'Parlons de votre stage', en: "Let's talk about your internship" },
     texte: {
       fr: 'Je recherche un stage conventionné de 12 semaines, du 29 mars au 18 juin 2027, en développement logiciel ou web.',
@@ -232,6 +295,13 @@ export const ui = {
       fr: 'Site statique construit avec Astro, TypeScript et du CSS natif. Aucun cookie, aucun traceur.',
       en: 'Static site built with Astro, TypeScript and native CSS. No cookies, no trackers.',
     },
+    main: {
+      fr: ['Kangourou 3D : ', ' par rt699448, licence ', ', modifié (patte levée, rendu Blender).'],
+      en: ['3D kangaroo: ', ' by rt699448, licence ', ', modified (raised paw, Blender render).'],
+    },
+    faitAvec: { fr: 'Fait avec', en: 'Made with' },
+    par: { fr: 'par', en: 'by' },
+    amour: { fr: 'amour', en: 'love' },
     maj: { fr: 'Dernière mise à jour', en: 'Last updated' },
     haut: { fr: 'Haut de page', en: 'Back to top' },
     source: { fr: 'Code source', en: 'Source code' },

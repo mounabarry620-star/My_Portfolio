@@ -1,15 +1,13 @@
 ---
 /**
  * Section 03 — Compétences : les six compétences du référentiel du BUT Informatique,
- * avec le niveau atteint et les projets qui servent de preuve, puis la boîte à outils.
+ * avec le niveau atteint et les projets qui servent de preuve. (Les outils sont dans « À propos ».)
  */
 import TitreSection from '../TitreSection.astro';
 import Niveaux from '../Niveaux.astro';
-import Logo from '../Logo.astro';
-import { logosDe } from '@/data/logos';
 import { ui } from '@/i18n/ui';
 import type { Langue } from '@/i18n';
-import { boiteAOutils, competences } from '@/data/competences';
+import { competences } from '@/data/competences';
 import { lienRealisation, titreRealisation } from '@/data/liens';
 
 interface Props {
@@ -17,11 +15,6 @@ interface Props {
 }
 const { langue: l } = Astro.props;
 
-const hors: Record<string, Record<Langue, string>> = {
-  cours: { fr: 'Cours et travaux pratiques', en: 'Coursework and labs' },
-  emploi: { fr: 'Emploi en boutique', en: 'Shop job' },
-};
-const ou = (ids: string[]) => ids.map((id) => hors[id]?.[l] ?? titreRealisation(l, id)).join(' · ');
 ---
 
 <section class="section competences" id="competences" data-section="competences" aria-labelledby="titre-competences">
@@ -82,39 +75,6 @@ const ou = (ids: string[]) => ids.map((id) => hors[id]?.[l] ?? titreRealisation(
       }
     </ul>
 
-    <div class="outils-bloc">
-      <div class="outils-bloc__tete" data-revele>
-        <h3 class="titre-3">{ui.competences.outils[l]}</h3>
-        <p class="chapo">{ui.competences.outilsIntro[l]}</p>
-        <p class="outils-ou" data-outils-ou data-defaut={ui.competences.outilsAide[l]} aria-live="polite">
-          {ui.competences.outilsAide[l]}
-        </p>
-      </div>
-      <dl class="outils-grille">
-        {
-          boiteAOutils.map((g, i) => (
-            <div class="outils-groupe" data-revele style={`--delai: ${i * 0.06}s`}>
-              <dt class="etiquette">{g.titre[l]}</dt>
-              <dd>
-                <ul class="puces">
-                  {g.outils.map((o) => (
-                    <li class="puce outil" tabindex="0" data-ou={`${o.nom} — ${ou(o.utiliseDans)}`}>
-                      {logosDe(o.nom).length > 0 && (
-                        <span class="outil__logos" aria-hidden="true">
-                          {logosDe(o.nom).map((n) => <Logo nom={n} />)}
-                        </span>
-                      )}
-                      {o.nom}
-                      <span class="cache-visuel"> — {ou(o.utiliseDans)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </dd>
-            </div>
-          ))
-        }
-      </dl>
-    </div>
   </div>
 </section>
 
@@ -169,9 +129,6 @@ const ou = (ids: string[]) => ids.map((id) => hors[id]?.[l] ?? titreRealisation(
       background-color 0.35s,
       color 0.35s,
       border-color 0.35s;
-  }
-  :global([data-theme='machine']) .comp__code {
-    border-radius: var(--rayon-s);
   }
   .comp__verbe {
     font-size: var(--t-xl);

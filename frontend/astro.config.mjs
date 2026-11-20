@@ -143,15 +143,17 @@ export default defineConfig({
     routing: { prefixDefaultLocale: false },
   },
   fonts: [
-    // Thème « Arles » : serif chaleureuse pour les titres, sans-serif nette pour le texte
+    // Thème « Sombre » : arrondie et lisible
+    police('Nunito', '--police-nunito', '300 900', ['Arial', 'sans-serif']),
+    // Thème « Clair » : serif chaleureuse pour les titres, sans-serif nette pour le texte
     police('Fraunces', '--police-fraunces', '300 900', ['Georgia', 'serif']),
     police('Instrument Sans', '--police-instrument', '400 700', ['Arial', 'sans-serif']),
-    // Thème « Marseille » : grotesque contemporaine (titres et texte)
+    // Thème « Bleu » : grotesque contemporaine (titres et texte)
     police('Bricolage Grotesque', '--police-bricolage', '300 800', ['Arial', 'sans-serif']),
-    // Thème « Conakry » : titres larges et affirmés
+    // Thème « Vert » : titres larges et affirmés
     police('Syne', '--police-syne', '500 800', ['Arial', 'sans-serif']),
     police('DM Sans', '--police-dmsans', '300 800', ['Arial', 'sans-serif']),
-    // Thème « Machine » : chasse fixe, comme dans un terminal
+    // Chasse fixe (code)
     police('JetBrains Mono', '--police-jetbrains', '300 800', ['Courier New', 'monospace']),
     // CV : les deux polices de mon CV de stage
     police('Raleway', '--police-raleway', '300 800', ['Arial', 'sans-serif']),
