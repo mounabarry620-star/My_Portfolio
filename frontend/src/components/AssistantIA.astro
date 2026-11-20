@@ -7,6 +7,7 @@
  * Sans JavaScript, le bouton reste masqué : le reste du site fonctionne normalement.
  */
 import Icone from './Icone.astro';
+import RobotIA from './RobotIA.astro';
 import { ui } from '@/i18n/ui';
 import type { Langue } from '@/i18n';
 import { suggestions } from '@/data/assistant';
@@ -106,9 +107,10 @@ const cleTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
     data-ouvrir-assistant="chat"
     aria-expanded="false"
     aria-controls="assistant-panneau"
+    title={a.bouton[l]}
   >
     <span class="assistant__ondes" aria-hidden="true"></span>
-    <Icone nom="micro" taille={22} />
+    <RobotIA />
     <span class="assistant__bouton-texte">{a.bouton[l]}</span>
   </button>
 </div>
@@ -132,40 +134,42 @@ const cleTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
   }
 
   /* ---- Bouton flottant ---- */
+  /* Le bouton = le petit robot qui flotte (plus de pastille ni de texte visible) */
   .assistant__bouton {
     position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-    min-block-size: 3.25rem;
-    padding: 0.7rem 1.15rem 0.7rem 0.95rem;
-    border-radius: 999px;
-    background: var(--encre);
-    color: var(--fond);
-    font-family: var(--f-etiquette);
-    font-weight: 700;
-    font-size: 0.9375rem;
-    box-shadow: var(--ombre);
+    display: grid;
+    place-items: center;
+    inline-size: 6rem;
+    block-size: 7.5rem;
+    padding: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--encre);
+    filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.18));
     transition: transform 0.35s var(--ressort);
   }
   .assistant__bouton:hover {
-    transform: translateY(-2px);
+    transform: scale(1.06);
+  }
+  .assistant__bouton:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
   }
   .assistant__bouton[aria-expanded='true'] {
     display: none;
   }
+  .assistant__bouton-texte {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   @media (max-width: 30em) {
     .assistant__bouton {
-      padding: 0;
-      inline-size: 3.25rem;
-      justify-content: center;
-    }
-    .assistant__bouton-texte {
-      position: absolute;
-      inline-size: 1px;
-      block-size: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
+      inline-size: 4.8rem;
+      block-size: 6rem;
     }
   }
 
