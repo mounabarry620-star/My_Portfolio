@@ -94,6 +94,12 @@ export function creerVoix(o: Options) {
       s.flux = flux;
       await ctx.audioWorklet.addModule(`${BASE}/assistant/capture-micro.worklet.js`);
       if (session !== s) return;
+      // Sur téléphone (surtout iPhone), le son se met souvent en pause juste après la fenêtre
+      // « Autoriser le micro » : sans relance, le micro n'est plus lu et Gemini n'entend rien.
+      await relancer(s);
+      ctx.onstatechange = () => {
+        if (session === s && ctx.state !== 'running' && ctx.state !== 'closed') void relancer(s);
+      };
       connecter(s, acces);
     } catch (err) {
       if (session !== s) return;
@@ -207,16 +213,30 @@ export function creerVoix(o: Options) {
     if (s.ws?.readyState === WebSocket.OPEN) s.ws.send(JSON.stringify(msg));
   };
 
+  const relancer = (s: Session) => s.ctx.resume().catch(() => {});
+
   /* --------------------------------------------------------- Micro → Gemini */
   function capturer(s: Session) {
+    // Le worklet ramène le micro à 16 kHz (format attendu par Gemini Live).
     const noeud = new AudioWorkletNode(s.ctx, 'capture-micro');
-    const type = `audio/pcm;rate=${s.ctx.sampleRate}`;
+    const type = 'audio/pcm;rate=16000';
+    let entendu = false;
     noeud.port.onmessage = (e: MessageEvent<Float32Array>) => {
       if (session !== s) return;
       s.niveauMicro = volume(e.data);
+      if (s.niveauMicro > 0.002) entendu = true;
       envoyer(s, { realtimeInput: { audio: { mimeType: type, data: versPcm16Base64(e.data) } } });
     };
     s.ctx.createMediaStreamSource(s.flux!).connect(noeud);
+    // Relié à la sortie par un volume nul : certains navigateurs (Safari sur iPhone surtout)
+    // ne lisent pas un micro qui n'est branché sur rien.
+    const muet = s.ctx.createGain();
+    muet.gain.value = 0;
+    noeud.connect(muet).connect(s.ctx.destination);
+    // Si le micro ne capte strictement rien pendant 6 s, on le dit au lieu de rester silencieux.
+    setTimeout(() => {
+      if (session === s && !entendu) o.afficherEtat(textes.microMuet);
+    }, 6000);
   }
 
   function versPcm16Base64(echantillons: Float32Array) {

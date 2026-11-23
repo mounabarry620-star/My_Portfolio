@@ -382,7 +382,14 @@ export const ui = {
     erreurs: {
       reseau: { fr: "L'assistant ne répond pas pour le moment. Réessayez dans un instant.", en: "The assistant isn't responding right now. Please try again shortly." },
       limite: { fr: 'Trop de questions en peu de temps. Réessayez dans une minute.', en: 'Too many questions in a short time. Please try again in a minute.' },
-      micro: { fr: "L'accès au micro a été refusé.", en: 'Microphone access was denied.' },
+      micro: {
+        fr: "L'accès au micro a été refusé. Autorisez le micro pour ce site dans les réglages du navigateur, puis réessayez.",
+        en: 'Microphone access was denied. Allow the microphone for this site in your browser settings, then try again.',
+      },
+      microMuet: {
+        fr: "Je n'entends rien : vérifiez que le micro n'est pas coupé ou utilisé par une autre appli.",
+        en: "I can't hear anything: check that your microphone isn't muted or used by another app.",
+      },
       robot: { fr: "La vérification anti-robot a échoué. Réessayez.", en: 'The bot check failed. Please try again.' },
       navigateur: { fr: 'Votre navigateur ne permet pas la conversation vocale. Écrivez votre question.', en: "Your browser doesn't support voice chat. Please type your question." },
       horsLigne: {
