@@ -229,8 +229,8 @@ export const ui = {
     titreCourt: { fr: 'Mon', en: 'My' },
     accent: { fr: 'parcours', en: 'journey' },
     sousTitre: {
-      fr: "Mes études et mes emplois, du plus récent au plus ancien.",
-      en: 'My studies and jobs, from the most recent to the oldest.',
+      fr: "De mon bac à Conakry jusqu'à mon diplôme : faites défiler, le train vous emmène.",
+      en: 'From my baccalaureate in Conakry to my degree: scroll down and ride the train.',
     },
     etiquette: { fr: 'Parcours', en: 'Journey' },
     titre: { fr: "D'où je viens, où je vais", en: 'Where I come from, where I am going' },
