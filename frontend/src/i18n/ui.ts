@@ -299,6 +299,10 @@ export const ui = {
       fr: ['Kangourou 3D : ', ' par rt699448, licence ', ', modifié (patte levée, rendu Blender).'],
       en: ['3D kangaroo: ', ' by rt699448, licence ', ', modified (raised paw, Blender render).'],
     },
+    train: {
+      fr: ['Train 3D : ', ' par TheOminousDuck, licence ', ', modifié (repeint, rendu Blender).'],
+      en: ['3D train: ', ' by TheOminousDuck, licence ', ', modified (repainted, Blender render).'],
+    },
     faitAvec: { fr: 'Fait avec', en: 'Made with' },
     par: { fr: 'par', en: 'by' },
     amour: { fr: 'amour', en: 'love' },

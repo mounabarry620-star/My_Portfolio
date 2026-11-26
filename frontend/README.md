@@ -164,6 +164,11 @@ Composants d'origine, traduits ici sans bibliothèque : « DomeGallery » et « 
 Logos : Skill Icons (https://github.com/tandpfun/skill-icons, MIT, licence copiée dans
 `src/assets/skill-icons/`), Simple Icons (CC0), Devicon (MIT), Lucide (ISC).
 
+Train 3D du parcours : « Tangara Sydney Trains T set » par TheOminousDuck
+(https://sketchfab.com/3d-models/07d7a69ffb544ec48442ae3448ee6f1f), licence CC BY 4.0, modifié
+(voiture de tête seule, livrée aux couleurs du thème, éclairage, rendu Blender : voir `blender/train/`).
+Le crédit est aussi dans le pied de page du site.
+
 Kangourou 3D : « baby kangaroo 3d model » par rt699448
 (https://sketchfab.com/3d-models/baby-kangaroo-3d-model-0048d4fce4884357917dc8d3f2bfe684), licence CC BY 4.0,
 modifié (patte levée, rendu Blender : voir `blender/kangourou/`). Sa licence demande de citer l'auteur

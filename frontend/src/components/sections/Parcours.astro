@@ -1,8 +1,11 @@
 ---
 /**
  * Parcours : la frise de Yeabsira Tarekegn (composant d'origine « Timeline » d'Aceternity UI),
- * traduite sans bibliothèque. La date reste collée en haut pendant qu'on lit l'étape ;
- * une ligne de couleur se remplit au fil du défilement.
+ * traduite sans bibliothèque. La date reste collée en haut pendant qu'on lit l'étape.
+ * La ligne est une voie ferrée, chaque date une gare : au défilement, un train 3D descend
+ * de gare en gare (il s'arrête à chacune, phares allumés quand il roule).
+ * Train : « Tangara Sydney Trains T set » (TheOminousDuck, CC BY 4.0), repeint et rendu dans
+ * Blender (blender/train/) en 3 couches : carrosserie, livrée (couleur du thème), lumières.
  * Les étapes (data/parcours.ts) vont du plus récent au plus ancien, les objectifs en tête.
  */
 import TitreSection from '../TitreSection.astro';
@@ -10,6 +13,7 @@ import { ui } from '@/i18n/ui';
 import type { Langue } from '@/i18n';
 import { etapes } from '@/data/parcours';
 import { lienRealisation } from '@/data/liens';
+import { url } from '@/i18n';
 
 interface Props {
   langue: Langue;
@@ -28,10 +32,10 @@ const liste = [...etapes].reverse();
       {
         liste.map((e) => (
           <li class:list={['etape', { 'etape--futur': e.futur }]}>
+            <span class="etape__point" aria-hidden="true" data-gare>
+              <span />
+            </span>
             <div class="etape__gauche">
-              <span class="etape__point" aria-hidden="true">
-                <span />
-              </span>
               <p class="etape__date">{e.dates[l]}</p>
             </div>
             <div class="etape__droite">
@@ -52,24 +56,59 @@ const liste = [...etapes].reverse();
         ))
       }
     </ol>
-    <div class="frise__ligne" aria-hidden="true">
-      <div class="frise__rayon" data-frise-rayon></div>
+    <div class="frise__ligne" aria-hidden="true"></div>
+    <!-- Le train (décoratif) : 3 couches superposées -->
+    <div class="train" data-train aria-hidden="true">
+      <img class="train__base" src={url('/img/train-base.webp')} alt="" width="189" height="700" decoding="async" />
+      <span class="train__livree" style={`--masque: url(${url('/img/train-livree.webp')})`}></span>
+      <img class="train__lumiere" src={url('/img/train-lumiere.webp')} alt="" width="189" height="700" decoding="async" />
+      <span class="train__faisceau"></span>
     </div>
   </div>
 </section>
 
 <script>
-  // La ligne se remplit de 0 (haut de la frise à 10 % de l'écran) à 1 (bas de la frise à 50 %).
+  // Le train : sa position suit le défilement, avec un arrêt à chaque gare (chaque date).
+  // Repère : le point de l'écran situé à 45 % de sa hauteur. Entre deux gares, le train reste
+  // en gare au début (25 % du trajet), roule, puis arrive un peu avant le point suivant.
   const frise = document.querySelector<HTMLElement>('[data-frise]');
-  const rayon = document.querySelector<HTMLElement>('[data-frise-rayon]');
-  if (frise && rayon) {
+  const train = document.querySelector<HTMLElement>('[data-train]');
+  const gares = [...document.querySelectorAll<HTMLElement>('[data-gare]')];
+  if (frise && train && gares.length > 1) {
+    const calme = matchMedia('(prefers-reduced-motion: reduce)');
+    let positions: number[] = [];
+    const mesurer = () => {
+      const haut = frise.getBoundingClientRect().top;
+      positions = gares.map((g) => {
+        const r = g.getBoundingClientRect();
+        return r.top - haut + r.height / 2;
+      });
+    };
+    const lisse = (t: number) => t * t * (3 - 2 * t);
     let attente = false;
+    let derniere = -1;
     const maj = () => {
       attente = false;
-      const r = frise.getBoundingClientRect();
-      const h = innerHeight;
-      const p = Math.min(1, Math.max(0, (0.1 * h - r.top) / (r.height - 0.4 * h)));
-      rayon.style.setProperty('--avance', String(p));
+      const repere = innerHeight * 0.45 - frise.getBoundingClientRect().top;
+      let y = positions[0]!;
+      let roule = false;
+      if (repere >= positions[positions.length - 1]!) y = positions[positions.length - 1]!;
+      else
+        for (let i = 0; i < positions.length - 1; i++) {
+          const a = positions[i]!, b = positions[i + 1]!;
+          if (repere < a) break;
+          if (repere < b) {
+            const t = (repere - a) / (b - a);
+            const u = Math.min(1, Math.max(0, (t - 0.25) / 0.6));
+            y = a + (b - a) * (calme.matches ? Math.round(u) : lisse(u));
+            roule = u > 0 && u < 1 && !calme.matches;
+            break;
+          }
+        }
+      train.style.setProperty('--y', `${y.toFixed(1)}px`);
+      train.toggleAttribute('data-roule', roule);
+      if (derniere < 0) requestAnimationFrame(() => train.classList.add('train--pret'));
+      derniere = y;
     };
     const demander = () => {
       if (!attente) {
@@ -77,9 +116,21 @@ const liste = [...etapes].reverse();
         requestAnimationFrame(maj);
       }
     };
-    addEventListener('scroll', demander, { passive: true });
-    addEventListener('resize', demander);
+    mesurer();
     maj();
+    addEventListener('scroll', demander, { passive: true });
+    addEventListener('resize', () => {
+      mesurer();
+      demander();
+    });
+    document.fonts?.ready.then(() => {
+      mesurer();
+      demander();
+    });
+    new ResizeObserver(() => {
+      mesurer();
+      demander();
+    }).observe(frise);
   }
 </script>
 
@@ -103,17 +154,19 @@ const liste = [...etapes].reverse();
   }
 
   .etape {
+    --haut: 2.5rem;
+    position: relative;
     display: flex;
     justify-content: flex-start;
-    padding-block-start: 2.5rem;
+    padding-block-start: var(--haut);
   }
   @media (min-width: 48em) {
     .etape {
+      --haut: 10rem;
       gap: 2.5rem;
-      padding-block-start: 10rem;
     }
     .etape:first-child {
-      padding-block-start: 2.5rem;
+      --haut: 2.5rem;
     }
   }
 
@@ -139,9 +192,12 @@ const liste = [...etapes].reverse();
       max-inline-size: 24rem;
     }
   }
+  /* La gare : un rond sur la voie, au niveau de la date */
   .etape__point {
     position: absolute;
+    inset-block-start: var(--haut);
     inset-inline-start: 0.75rem;
+    z-index: 2;
     display: grid;
     place-items: center;
     inline-size: 2.5rem;
@@ -228,35 +284,86 @@ const liste = [...etapes].reverse();
     line-height: 1.7;
   }
 
-  /* La ligne et son rayon de couleur */
+  /* La voie : deux rails et des traverses, qui s'effacent en haut et en bas */
   .frise__ligne {
+    --rail: color-mix(in oklch, var(--encre) 40%, var(--fond));
+    --traverse: color-mix(in oklch, var(--encre) 14%, var(--fond));
     position: absolute;
     inset-block: 0;
-    inset-inline-start: 2rem;
-    inline-size: 2px;
-    overflow: hidden;
-    background: linear-gradient(to bottom, transparent 0%, var(--trait-fort), transparent 99%);
-    mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%);
+    inset-inline-start: calc(2rem - 13px);
+    inline-size: 26px;
+    background:
+      linear-gradient(90deg, transparent 4px, var(--rail) 4px 6px, transparent 6px 20px, var(--rail) 20px 22px, transparent 22px),
+      repeating-linear-gradient(180deg, var(--traverse) 0 4px, transparent 4px 12px);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 6%, #000 94%, transparent 100%);
   }
   @media (min-width: 48em) {
     .frise__ligne {
-      inset-inline-start: calc(2.5rem + 2rem);
+      inset-inline-start: calc(2.5rem + 2rem - 13px);
     }
   }
-  .frise__rayon {
-    --avance: 0;
+
+  /* Le train : posé sur la voie, centré sur sa position --y */
+  .train {
+    --l: 2.6rem;
+    --y: 0px;
     position: absolute;
-    inset-inline: 0;
     inset-block-start: 0;
-    inline-size: 2px;
-    block-size: calc(var(--avance) * 100%);
-    border-radius: 999px;
-    background: linear-gradient(to top, var(--accent) 0%, var(--accent-2) 10%, transparent);
-    opacity: min(1, calc(var(--avance) * 10));
+    inset-inline-start: calc(2rem - var(--l) / 2);
+    z-index: 3;
+    inline-size: var(--l);
+    aspect-ratio: 189 / 700;
+    transform: translateY(calc(var(--y) - 50%));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+    --faisceau: rgb(255 222 140 / 0.35);
   }
-  @media (prefers-reduced-motion: reduce) {
-    .frise__rayon {
-      --avance: 1 !important;
+  .train--pret {
+    opacity: 1;
+  }
+  @media (min-width: 48em) {
+    .train {
+      --l: 4rem;
+      inset-inline-start: calc(2.5rem + 2rem - var(--l) / 2);
     }
+  }
+  :global([data-theme='sombre']) .train {
+    --faisceau: rgb(255 235 190 / 0.5);
+  }
+  .train__base,
+  .train__livree,
+  .train__lumiere {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+  /* La livrée prend la couleur du thème (masque blanc + couleur) */
+  .train__livree {
+    background: var(--accent);
+    mask: var(--masque) center / 100% 100% no-repeat;
+  }
+  /* Les lumières : fenêtres toujours un peu allumées, phares quand il roule */
+  .train__lumiere {
+    mix-blend-mode: plus-lighter;
+    opacity: 0.35;
+    transition: opacity 0.35s;
+  }
+  /* Le faisceau des phares, sur la voie devant le train */
+  .train__faisceau {
+    position: absolute;
+    inset: 91% auto auto 50%;
+    inline-size: 150%;
+    block-size: 70%;
+    background: linear-gradient(var(--faisceau), transparent 90%);
+    clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%);
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+  .train[data-roule] .train__lumiere,
+  .train[data-roule] .train__faisceau {
+    opacity: 1;
   }
 </style>
