@@ -78,6 +78,19 @@ for m in bpy.data.materials:
     else:
         regler(m)
 
+# ---- Inscription « SNCF » sur le toit (lettres blanches, en relief très léger), dans le sens de la longueur
+bpy.ops.object.text_add(location=(0, -0.4, 1.535))
+texte = bpy.context.active_object
+texte.data.body = 'SNCF'
+texte.data.align_x = 'CENTER'; texte.data.align_y = 'CENTER'
+texte.data.size = 1.3
+texte.data.extrude = 0.004
+texte.data.font = bpy.data.fonts.load('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf') if os.path.exists('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf') else texte.data.font
+texte.rotation_euler = (0, 0, math.radians(float(os.environ.get('ROT_TEXTE', '90'))))
+mt = bpy.data.materials.new('Inscription'); mt.use_nodes = True
+bt = mt.node_tree.nodes['Principled BSDF']; bt.inputs['Base Color'].default_value = (0.95, 0.95, 0.95, 1); bt.inputs['Roughness'].default_value = 0.5
+texte.data.materials.append(mt)
+
 # ---- Phares (2 disques à l'avant) et faisceau sur la voie
 def phare(x):
     bpy.ops.mesh.primitive_circle_add(vertices=24, radius=0.11, fill_type='NGON', location=(x, 5.79, -0.55), rotation=(math.radians(90), 0, 0))

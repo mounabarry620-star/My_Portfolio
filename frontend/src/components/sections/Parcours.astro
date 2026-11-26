@@ -3,7 +3,7 @@
  * Parcours : la frise de Yeabsira Tarekegn (composant d'origine « Timeline » d'Aceternity UI),
  * traduite sans bibliothèque. La date reste collée en haut pendant qu'on lit l'étape.
  * La ligne est une voie ferrée, chaque date une gare : au défilement, un train 3D descend
- * de gare en gare (il s'arrête à chacune, phares allumés quand il roule).
+ * de gare en gare (il s'arrête à chacune, phares allumés quand il roule), en glissant à vitesse limitée.
  * Train : « Tangara Sydney Trains T set » (TheOminousDuck, CC BY 4.0), repeint et rendu dans
  * Blender (blender/train/) en 3 couches : carrosserie, livrée (couleur du thème), lumières.
  * Les étapes (data/parcours.ts) vont du plus récent au plus ancien, les objectifs en tête.
@@ -68,9 +68,10 @@ const liste = [...etapes].reverse();
 </section>
 
 <script>
-  // Le train : sa position suit le défilement, avec un arrêt à chaque gare (chaque date).
-  // Repère : le point de l'écran situé à 45 % de sa hauteur. Entre deux gares, le train reste
-  // en gare au début (25 % du trajet), roule, puis arrive un peu avant le point suivant.
+  // Le train : le défilement fixe sa DESTINATION (une gare ou un point entre deux gares),
+  // puis le train y glisse doucement, à vitesse limitée : il ne saute jamais d'un cran de molette.
+  // Repère : le point situé à 45 % de la hauteur de l'écran. Sur chaque trajet entre deux gares,
+  // le train attend en gare sur les premiers 20 % du défilement, puis roule.
   const frise = document.querySelector<HTMLElement>('[data-frise]');
   const train = document.querySelector<HTMLElement>('[data-train]');
   const gares = [...document.querySelectorAll<HTMLElement>('[data-gare]')];
@@ -85,52 +86,72 @@ const liste = [...etapes].reverse();
       });
     };
     const lisse = (t: number) => t * t * (3 - 2 * t);
-    let attente = false;
-    let derniere = -1;
-    const maj = () => {
-      attente = false;
+
+    /** Où le train doit aller, d'après le défilement. */
+    const destination = () => {
       const repere = innerHeight * 0.45 - frise.getBoundingClientRect().top;
-      let y = positions[0]!;
-      let roule = false;
-      if (repere >= positions[positions.length - 1]!) y = positions[positions.length - 1]!;
-      else
-        for (let i = 0; i < positions.length - 1; i++) {
-          const a = positions[i]!, b = positions[i + 1]!;
-          if (repere < a) break;
-          if (repere < b) {
-            const t = (repere - a) / (b - a);
-            const u = Math.min(1, Math.max(0, (t - 0.25) / 0.6));
-            y = a + (b - a) * (calme.matches ? Math.round(u) : lisse(u));
-            roule = u > 0 && u < 1 && !calme.matches;
-            break;
-          }
+      const n = positions.length;
+      if (repere <= positions[0]!) return positions[0]!;
+      if (repere >= positions[n - 1]!) return positions[n - 1]!;
+      for (let i = 0; i < n - 1; i++) {
+        const a = positions[i]!, b = positions[i + 1]!;
+        if (repere < b) {
+          const u = Math.min(1, Math.max(0, ((repere - a) / (b - a) - 0.2) / 0.7));
+          return a + (b - a) * (calme.matches ? Math.round(u) : lisse(u));
         }
-      train.style.setProperty('--y', `${y.toFixed(1)}px`);
-      train.toggleAttribute('data-roule', roule);
-      if (derniere < 0) requestAnimationFrame(() => train.classList.add('train--pret'));
-      derniere = y;
+      }
+      return positions[n - 1]!;
     };
-    const demander = () => {
-      if (!attente) {
-        attente = true;
-        requestAnimationFrame(maj);
+
+    let y = 0;
+    let vise = 0;
+    let anime = false;
+    let avant = 0;
+    const poser = () => train.style.setProperty('--y', `${y.toFixed(1)}px`);
+    const image = (t: number) => {
+      const dt = Math.min(0.05, (t - avant) / 1000);
+      avant = t;
+      const ecart = vise - y;
+      // Approche douce (amortie) avec une vitesse maximale : environ 1,5 s entre deux gares.
+      const vmax = Math.max(220, Math.abs(ecart) * 0.6);
+      const pas = Math.sign(ecart) * Math.min(Math.abs(ecart) * (1 - Math.exp(-dt * 2.2)), vmax * dt);
+      y += pas;
+      poser();
+      const roule = Math.abs(ecart) > 2;
+      train.toggleAttribute('data-roule', roule);
+      if (roule) requestAnimationFrame(image);
+      else {
+        y = vise;
+        poser();
+        anime = false;
       }
     };
+    const maj = () => {
+      vise = destination();
+      if (calme.matches) {
+        y = vise;
+        poser();
+        return;
+      }
+      if (!anime) {
+        anime = true;
+        avant = performance.now();
+        requestAnimationFrame(image);
+      }
+    };
+
     mesurer();
-    maj();
-    addEventListener('scroll', demander, { passive: true });
-    addEventListener('resize', () => {
+    y = vise = destination();
+    poser();
+    requestAnimationFrame(() => train.classList.add('train--pret'));
+    addEventListener('scroll', maj, { passive: true });
+    const remesurer = () => {
       mesurer();
-      demander();
-    });
-    document.fonts?.ready.then(() => {
-      mesurer();
-      demander();
-    });
-    new ResizeObserver(() => {
-      mesurer();
-      demander();
-    }).observe(frise);
+      maj();
+    };
+    addEventListener('resize', remesurer);
+    document.fonts?.ready.then(remesurer);
+    new ResizeObserver(remesurer).observe(frise);
   }
 </script>
 
