@@ -574,13 +574,18 @@ const outils = Object.values(
     overflow: hidden;
     border-radius: 6px;
   }
+  .chat__piece :global(picture) {
+    display: block;
+  }
+  /* Photo carrée, visage centré ; sur petit écran on garde le haut (le visage) */
   .chat__piece :global(img) {
     display: block;
     inline-size: 100%;
     block-size: auto;
-    max-block-size: min(11rem, 22vh);
+    aspect-ratio: 1;
+    max-block-size: min(15rem, 26vh);
     object-fit: cover;
-    object-position: 50% 25%;
+    object-position: 50% 30%;
   }
   .chat__fichier {
     position: absolute;
