@@ -3,7 +3,8 @@
  * Parcours : la frise de Yeabsira Tarekegn (composant d'origine « Timeline » d'Aceternity UI),
  * traduite sans bibliothèque. La date reste collée en haut pendant qu'on lit l'étape.
  * Du plus ancien au plus récent. La voie a deux lignes (Ligne 1 « Sciences et mécanique »,
- * Ligne 2 « Informatique ») reliées par la gare de correspondance (2025).
+ * Ligne 2 « Informatique ») : juste avant la correspondance (2025), un aiguillage fait changer
+ * le train de voie (la Ligne 2 est décalée sur le côté) ; il penche dans la courbe.
  * La ligne est une voie ferrée, chaque date une gare : au défilement, un train 3D descend
  * de gare en gare (il s'arrête à chacune, phares allumés quand il roule), en glissant à vitesse limitée.
  * Train : « Tangara Sydney Trains T set » (TheOminousDuck, CC BY 4.0), repeint et rendu dans
@@ -26,7 +27,6 @@ const liste = etapes;
 const numeroLigne = { conakry: 1, arles: 2 } as const;
 /** Première étape de chaque ligne : on y affiche le panneau de la ligne. */
 const debutLigne = (i: number) => i === 0 || liste[i - 1]!.ligne !== liste[i]!.ligne;
-const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspondance') - 1]?.ligne ?? 'conakry';
 ---
 
 <section class="section parcours" id="parcours" data-section="parcours" aria-labelledby="titre-parcours">
@@ -51,29 +51,13 @@ const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspond
               <p class="etape__date etape__date--mobile" aria-hidden="true">
                 {e.dates[l]}
               </p>
-              {e.genre === 'correspondance' ? (
-                <div class="tableau">
-                  <p class="tableau__titre">{ui.parcours.correspondance[l]}</p>
-                  <p class="tableau__lignes">
-                    <span class="pastille-ligne pastille-ligne--1">{numeroLigne[avantCorrespondance]}</span>
-                    {lignes[avantCorrespondance].note[l]}
-                    <span aria-hidden="true">→</span>
-                    <span class="cache-visuel">{l === 'fr' ? 'vers' : 'to'}</span>
-                    <span class="pastille-ligne pastille-ligne--2">{numeroLigne[e.ligne]}</span>
-                    {lignes[e.ligne].note[l]}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {debutLigne(i) && (
-                    <p class={`panneau-ligne panneau-ligne--${numeroLigne[e.ligne]}`}>
-                      <span class={`pastille-ligne pastille-ligne--${numeroLigne[e.ligne]}`}>{numeroLigne[e.ligne]}</span>
-                      {lignes[e.ligne].nom[l]} · {lignes[e.ligne].note[l]}
-                    </p>
-                  )}
-                  <p class="etape__genre">{ui.parcours[e.genre][l]}</p>
-                </>
+              {debutLigne(i) && (
+                <p class={`panneau-ligne panneau-ligne--${numeroLigne[e.ligne]}`}>
+                  <span class={`pastille-ligne pastille-ligne--${numeroLigne[e.ligne]}`}>{numeroLigne[e.ligne]}</span>
+                  {lignes[e.ligne].nom[l]} · {lignes[e.ligne].note[l]}
+                </p>
               )}
+              <p class="etape__genre">{ui.parcours[e.genre][l]}</p>
               <h3 class="etape__titre">{e.titre[l]}</h3>
               <p class="etape__lieu">{e.lieu[l]}</p>
               {e.texte && <p class="etape__texte">{e.texte[l]}</p>}
@@ -87,9 +71,21 @@ const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspond
         ))
       }
     </ol>
-    <!-- La voie : Ligne 1 jusqu'à la correspondance, Ligne 2 ensuite (--coupure posé par le script) -->
+    <!-- La voie : la Ligne 1, puis un aiguillage (courbe) qui mène à la Ligne 2, décalée sur le côté.
+         Le script place la courbe juste avant la gare de correspondance. -->
     <div class="frise__ligne" aria-hidden="true" data-voie>
       <span class="voie voie--1"></span>
+      <svg class="aiguillage" data-aiguillage preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="rail-aiguillage" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" class="aiguillage__haut"></stop>
+            <stop offset="1" class="aiguillage__bas"></stop>
+          </linearGradient>
+        </defs>
+        <path class="aiguillage__traverses" data-trace></path>
+        <path class="aiguillage__rail" data-trace data-decalage="-8"></path>
+        <path class="aiguillage__rail" data-trace data-decalage="8"></path>
+      </svg>
       <span class="voie voie--2"></span>
     </div>
     <!-- Le train (décoratif) : 3 couches superposées -->
@@ -115,15 +111,47 @@ const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspond
   if (frise && train && gares.length > 1) {
     const calme = matchMedia('(prefers-reduced-motion: reduce)');
     let positions: number[] = [];
+    let decalage = 0, debut = 0, fin = 0;
+    const lisse = (t: number) => t * t * (3 - 2 * t);
     const mesurer = () => {
       const haut = frise.getBoundingClientRect().top;
       positions = gares.map((g) => {
         const r = g.getBoundingClientRect();
         return r.top - haut + r.height / 2;
       });
-      if (voie && iCorrespondance >= 0) voie.style.setProperty('--coupure', `${positions[iCorrespondance]}px`);
+      if (voie && iCorrespondance > 0) {
+        // Décalage entre les deux voies = écart horizontal entre une gare de chaque ligne.
+        const x1 = gares[iCorrespondance - 1]!.getBoundingClientRect();
+        const x2 = gares[iCorrespondance]!.getBoundingClientRect();
+        decalage = x2.left - x1.left;
+        // L'aiguillage occupe le milieu du trajet qui mène à la correspondance.
+        const a = positions[iCorrespondance - 1]!, c = positions[iCorrespondance]!;
+        debut = a + (c - a) * 0.3;
+        fin = c - (c - a) * 0.22;
+        voie.style.setProperty('--debut', `${debut}px`);
+        voie.style.setProperty('--fin', `${fin}px`);
+        voie.style.setProperty('--decalage', `${decalage}px`);
+        dessinerAiguillage();
+      }
     };
-    const lisse = (t: number) => t * t * (3 - 2 * t);
+    /** Position horizontale de la voie (0 sur la Ligne 1, décalage sur la Ligne 2) à la hauteur y. */
+    const xVoie = (yy: number) => (yy <= debut ? 0 : yy >= fin ? decalage : decalage * lisse((yy - debut) / (fin - debut)));
+    function dessinerAiguillage() {
+      const svg = document.querySelector<SVGSVGElement>('[data-aiguillage]');
+      if (!svg) return;
+      const h = fin - debut, l = 26 + Math.abs(decalage);
+      svg.setAttribute('viewBox', `0 0 ${l} ${h}`);
+      const depart = decalage < 0 ? -decalage : 0;
+      svg.querySelectorAll<SVGPathElement>('[data-trace]').forEach((p) => {
+        const d = Number(p.dataset.decalage ?? 0);
+        let trace = '';
+        for (let k = 0; k <= 40; k++) {
+          const yy = (h * k) / 40;
+          trace += `${k ? 'L' : 'M'}${(depart + 13 + d + xVoie(debut + yy)).toFixed(2)} ${yy.toFixed(2)}`;
+        }
+        p.setAttribute('d', trace);
+      });
+    }
 
     /** Où le train doit aller, d'après le défilement. */
     const destination = () => {
@@ -150,10 +178,15 @@ const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspond
     let signale = false;
     const poser = () => {
       train.style.setProperty('--y', `${y.toFixed(1)}px`);
+      // Sur l'aiguillage : le train suit la courbe et penche dans le sens du virage.
+      const x = xVoie(y);
+      const pente = (xVoie(y + 6) - xVoie(y - 6)) / 12;
+      train.style.setProperty('--x', `${x.toFixed(1)}px`);
+      train.style.setProperty('--r', `${(-Math.atan(pente) * 180 / Math.PI).toFixed(2)}deg`);
       // Couleur de la ligne : Ligne 1 avant la correspondance, Ligne 2 à partir d'elle.
       if (iCorrespondance >= 0) {
         const c = positions[iCorrespondance]!;
-        train.dataset.ligne = y < c - 4 ? '1' : '2';
+        train.dataset.ligne = y < (debut + fin) / 2 ? '1' : '2';
         // En gare de correspondance : les phares clignotent deux fois (une fois par arrêt).
         const aQuai = Math.abs(y - c) < 3;
         if (aQuai && !signale && !calme.matches) {
@@ -365,6 +398,13 @@ const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspond
   .parcours {
     --ligne-1: var(--accent-2);
     --ligne-2: var(--accent);
+    /* écart entre la voie de la Ligne 1 et celle de la Ligne 2 */
+    --decalage-voie: 1.25rem;
+  }
+  @media (min-width: 48em) {
+    .parcours {
+      --decalage-voie: 2.25rem;
+    }
   }
   /* La voie : deux rails et des traverses, qui s'effacent en haut et en bas ;
      rails de la couleur de la Ligne 1 jusqu'à la correspondance, de la Ligne 2 ensuite. */
@@ -374,23 +414,67 @@ const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspond
     position: absolute;
     inset-block: 0;
     inset-inline-start: calc(2rem - 13px);
-    inline-size: 26px;
+    /* assez large pour la Ligne 2, décalée sur le côté (sinon le fondu la masquerait) */
+    inline-size: calc(26px + var(--decalage, 0px));
     mask-image: linear-gradient(to bottom, transparent 0%, #000 6%, #000 94%, transparent 100%);
   }
   .voie {
     position: absolute;
-    inset-inline: 0;
+    inline-size: 26px;
     background:
       linear-gradient(90deg, transparent 4px, var(--rail) 4px 6px, transparent 6px 20px, var(--rail) 20px 22px, transparent 22px),
       repeating-linear-gradient(180deg, var(--traverse) 0 4px, transparent 4px 12px);
   }
   .voie--1 {
     --rail: color-mix(in oklch, var(--ligne-1) 80%, var(--encre));
-    inset-block: 0 calc(100% - var(--coupure));
+    inset-block: 0 calc(100% - var(--debut, 50%));
+    inset-inline-start: 0;
   }
   .voie--2 {
     --rail: color-mix(in oklch, var(--ligne-2) 80%, var(--encre));
-    inset-block: var(--coupure) 0;
+    inset-block: var(--fin, 50%) 0;
+    inset-inline-start: var(--decalage, 0px);
+  }
+  /* La courbe de l'aiguillage (tracée par le script) */
+  .aiguillage {
+    position: absolute;
+    inset-block-start: var(--debut, 50%);
+    inset-inline-start: 0;
+    inline-size: calc(26px + var(--decalage, 0px)); /* la Ligne 2 est toujours décalée vers la droite */
+    block-size: calc(var(--fin, 50%) - var(--debut, 50%));
+    overflow: visible;
+  }
+  .aiguillage__traverses {
+    fill: none;
+    stroke: var(--traverse);
+    stroke-width: 20;
+    stroke-dasharray: 4 8;
+  }
+  .aiguillage__rail {
+    fill: none;
+    stroke: url(#rail-aiguillage);
+    stroke-width: 2;
+  }
+  .aiguillage__haut {
+    stop-color: color-mix(in oklch, var(--ligne-1) 80%, var(--encre));
+  }
+  .aiguillage__bas {
+    stop-color: color-mix(in oklch, var(--ligne-2) 80%, var(--encre));
+  }
+  /* Les gares de la Ligne 2 sont sur la voie décalée */
+  .etape--ligne-2 .etape__point {
+    inset-inline-start: calc(0.75rem + var(--decalage-voie));
+  }
+  .etape--ligne-2 .etape__droite {
+    padding-inline-start: calc(5rem + var(--decalage-voie));
+  }
+  @media (min-width: 48em) {
+    .etape--ligne-2 .etape__droite {
+      padding-inline-start: 1rem;
+    }
+    .etape--ligne-2 .etape__gauche .etape__date {
+      padding-inline-start: calc(5rem + var(--decalage-voie));
+    }
   }
 
   /* Panneau de quai au début de chaque ligne */
@@ -424,50 +508,6 @@ const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspond
     background: var(--ligne-2);
   }
 
-  /* Tableau d'affichage de la correspondance (style panneau de gare) */
-  .tableau {
-    display: grid;
-    gap: 0.5rem;
-    max-inline-size: 30rem;
-    margin-block-end: 1rem;
-    padding: 0.9rem 1.1rem;
-    border-radius: 10px;
-    background: oklch(22% 0.06 262);
-    color: white;
-    box-shadow: var(--ombre);
-  }
-  .tableau__titre {
-    margin: 0;
-    font: 800 0.8125rem/1 var(--mono-systeme);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: oklch(86% 0.16 90);
-  }
-  .tableau__lignes {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.45rem;
-    margin: 0;
-    font-size: 0.9375rem;
-    font-weight: 600;
-  }
-
-  /* La gare de correspondance : un gros double rond, moitié Ligne 1, moitié Ligne 2 */
-  .etape--correspondance .etape__point {
-    inset-inline-start: 0.5rem;
-    inline-size: 3rem;
-    block-size: 3rem;
-    margin-block-start: -0.25rem;
-    background: conic-gradient(from -90deg, var(--ligne-1) 0 50%, var(--ligne-2) 50% 100%);
-    box-shadow: 0 0 0 3px var(--fond);
-  }
-  .etape--correspondance .etape__point > span {
-    inline-size: 1.5rem;
-    block-size: 1.5rem;
-    background: var(--fond);
-    border: 3px solid var(--encre);
-  }
   @media (min-width: 48em) {
     .frise__ligne {
       inset-inline-start: calc(2.5rem + 2rem - 13px);
@@ -484,7 +524,7 @@ const avantCorrespondance = liste[liste.findIndex((e) => e.genre === 'correspond
     z-index: 3;
     inline-size: var(--l);
     aspect-ratio: 189 / 700;
-    transform: translateY(calc(var(--y) - 50%));
+    transform: translate(var(--x, 0px), calc(var(--y) - 50%)) rotate(var(--r, 0deg));
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.4s;

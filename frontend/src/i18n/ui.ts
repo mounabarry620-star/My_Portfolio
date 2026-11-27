@@ -150,6 +150,7 @@ export const ui = {
     },
     outils: { fr: 'Mes outils', en: 'My tools' },
     ecole: { fr: "IUT d'Arles · BUT Informatique, 2e année", en: 'IUT Arles · BUT Computer Science, 2nd year' },
+    lireGrand: { fr: 'Lire ce texte en grand', en: 'Read this text in large print' },
     messageImage: { fr: "Voici l'image de ma section « À propos ».", en: 'Here is the picture for my About section.' },
   },
 
